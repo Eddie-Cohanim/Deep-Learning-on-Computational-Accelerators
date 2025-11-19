@@ -46,38 +46,50 @@ training set, then we know that it inst drastically affected by small mistakes/c
 """
 
 part1_q2 = r"""
-**NO.** My friend's approach is not justifiable because he used the test set to choose the value of $\lambda$
-By doing that, he allowed the test set to influence the model selection process, instead of using a separate
-validation set. As a result, the test set is no longer an unbiased and independent estimate of the model's
- generalization performance.
+**NO.** My friend's approach is not justifiable because he used the test set when choosing the value of $\lambda$
+By doing so, he allowed information from the test set to influence the model selection process. The correct
+procedure is to tune hyperparameters using only the training data typically through cross validation where the model
+is trained on a subset of the data and evaluated on a validation fold that it has not seen during training.
+This prevents any leakage of test set information.
 
+Once hyperparameters such as $\lambda$ are chosen using cross validation, the test set should be used exactly once 
+at the very end to provide an unbiased estimate of the model's generalization ability. If we evaluate multiple models
+on the test set while choosing the best parameters, we risk overfitting to that test set, making the selected model look
+better than it truly is on new data. Therefore, the test set must remain completely independent during model development
+and be used only for the final evaluation.
 """
 
 # ==============
 # Part 2 answers
 
 part2_q1 = r"""
-If we allow $\Delta < 0$ in the SVM loss, the margin constraint becomes reversed. Instead of 
-requiring the correct class score to be higher than the incorrect class scores, the loss now 
-allows the correct class score to be lower by up to $|\Delta|$.
-
-Since the regularization term punishes large weights, the model can minimize the full loss 
-by shrinking all weights toward zero. In this case all class scores become equal,
-and the model collapses to the solution $W = 0$. 
+In the structured hinge loss, $\Delta$ represents the required margin between the score of the correct class and the scores
+of incorrect classes. When $\Delta > 0$, the model is penalized whenever an incorrect class score comes too close to the 
+correct class score. This enforces a positive margin and encourages the model to maintain a clear separation between classes.
+The regularization term still pushes the weights to be smaller, which promotes generalization but can make it harder for the model
+to maintain a very large margin.
+If we allow $\Delta < 0$, the meaning of the margin constraint changes. A negative $\Delta$ effectively allows the score of the
+correct class to be lower than the scores of incorrect classes by up to$|\Delta|$. Since the regularization term penalizes large
+weights, the model can minimize the overall loss by shrinking the weights toward zero. When all weights collapse to zero, all
+class scores become identical, and the model reaches a trivial solution $W = 0$
+This leads to poor generalization and many misclassifications, since the margin requirement no longer enforces the correct
+class to be preferred.
 
 """
 
 part2_q2 = r"""
-From the visualization, we can assume that the model is learning the main visual characteristics
-of each digit. For example, in the digit 4, the top part is usually not connected and there is a long
-vertical line on the right side of the sketch. In contrast, the digit 9 typically has a connected circular
-top part and a downward stroke.
-
-This suggests that the model is not simply memorizing pixel patterns, but instead learning the prominent
-visual features or strokes that consistently define each number, such as edges, curves, junctions,
-and whether certain parts are connected or disconnected.
-In other words, the model learns the most distinctive characteristics of each digit and then uses these
-learned patterns to correctly identify the digits in the test set.
+By examining the weight visualizations, we see that the model learns which pixel regions are important for identifying each digit.
+Bright regions correspond to positive weights, meaning the model increases the score for a digit when pixels in those areas are activated.
+Dark regions correspond to negative weights, which penalize the presence of pixels in those regions. This effectively forms a map
+of pixel importance: the model assigns high weight to strokes and shapes that commonly appear in a digit, and negative weight to regions 
+where pixels should not appear. For example, in the digit 0, the model expects a dark central region, reflecting the hollow center
+characteristic of zeros. White pixels appearing in that region would significantly lower the score. Because some digits share 
+geometric similarities, such as 4 and 9, variations in handwriting may activate weight patterns associated with the wrong digit,
+resulting in misclassification.
+From the visualization of the learned features, we can also infer that the model captures the main structural characteristics
+of each digit rather than memorizing exact pixel arrangements. For instance, the digit 4 often has a disconnected top and a strong
+vertical stroke on the right, while the digit 9 usually has a connected circular top region and a downward curve. These consistent 
+visual cues help the model distinguish between digits by focusing on edges, curves, and connectivity patterns that define each one.
 
 """
 
@@ -115,13 +127,34 @@ An equation: $e^{i\pi} -1 = 0$
 part3_q2 = r"""
 **Your answer:**
 
+**1.**
+It's still a linear regression model because its still linear in its parameters.
+Even if we apply a non-linear feature mapping such as
+$$
+x \;\mapsto\; (x,\; x^2,\; x^3),
+$$
+the model remains a linear combination of these transformed features. 
 
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+**2.** 
+We can apply any non-linear transformation to the original features, but this does not
+mean we can fit any non-linear function. The model can only represent functions that
+lie in the span of the specific feature mappings we choose. Non-linear features are
+useful only when they capture meaningful structure in the data and help separate or
+explain the patterns we want to model.
+
+At the same time, adding many non-linear features increases the dimensionality of the*
+feature space, which can lead to overfitting
+
+**3.**
+In the transformed feature space, the decision boundary is still a hyperplane, since
+the classifier remains a linear function of the new features. The non-linearity comes
+from the feature mapping, not from the model itself. When we look back at the boundary
+in the original feature space, it no longer appears linear. Instead, the mapping can
+bend or curve the hyperplane, producing a non-linear decision boundary in the
+original input space. In this way, linear models gain the ability to separate data
+that is not linearly separable in the raw feature space.
+
+
 
 """
 
@@ -129,12 +162,87 @@ part3_q3 = r"""
 **Your answer:**
 
 
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+**1.** We want to compute
+$$ \mathbb{E}[|y-x|] = \int_{0}^{1}\int_{0}^{1} |y-x|\, dx\, dy $$
+where $x,y \sim \mathrm{Uniform}(0,1)$
+
+let us split the domain according to the absolute value options:
+$
+|y-x| =
+\begin{cases}
+y-x, & y \ge x,\\[4pt]
+x-y, & x \ge y
+\end{cases}
+$
+
+therefore we are getting,
+$$
+\mathbb{E}[|y-x|]
+= \int_{0}^{1}\int_{0}^{y} (y-x)\, dx\, dy
++ \int_{0}^{1}\int_{0}^{x} (x-y)\, dy\, dx
+$$
+
+we start by computing the first integral:
+$$
+\int_{0}^{1}\int_{0}^{y} (y-x)\, dx\, dy
+= \int_{0}^{1} \left( yx - \frac{x^{2}}{2} \right)_{x=0}^{x=y} dy
+= \int_{0}^{1} \frac{y^{2}}{2}\, dy
+= \frac{1}{6}
+$$
+
+then we continiue with the second integral:
+$$
+\int_{0}^{1}\int_{0}^{x} (x-y)\, dy\, dx
+= \int_{0}^{1} \left( xy - \frac{y^{2}}{2} \right)_{y=0}^{y=x}= \int_{0}^{1} \frac{x^{2}}{2}\, dx
+= \frac{1}{6}$$
+
+Therefore,
+$$
+\mathbb{E}[|y-x|] = \text{first integral} + \text{second integral} =  \frac{1}{6} + \frac{1}{6} = \frac{1}{3}
+$$
+
+**2.**
+
+Since $x \sim \mathrm{Uniform}(0,1)$, we compute
+$$
+\mathbb{E}_x[|\hat{x}-x|]
+= \int_0^1 |\hat{x}-x|\,dx
+= \int_0^{\hat{x}} (\hat{x}-x)\,dx + \int_{\hat{x}}^1 (x-\hat{x})\,dx
+$$
+
+The first integral is
+$$
+\int_0^{\hat{x}} (\hat{x}-x)\,dx
+= \left[\hat{x}x - \frac{x^2}{2}\right]_0^{\hat{x}}
+= \frac{\hat{x}^2}{2}
+$$
+
+The second integral is
+$$
+\int_{\hat{x}}^1 (x-\hat{x})\,dx
+= \left[\frac{x^2}{2} - \hat{x}x\right]_{\hat{x}}^1
+= \frac{1}{2} - \hat{x} + \frac{\hat{x}^2}{2}
+$$
+
+Adding both terms:
+$$
+\mathbb{E}_x[|\hat{x}-x|]
+= \hat{x}^2 - \hat{x} + \frac{1}{2}
+$$
+
+**3.** 
+
+A constant term in a polynomial can be dropped when optimizing because it does not
+affect the minimizer. If
+$$
+L(\hat{x}) = \hat{x}^2 - \hat{x} + \frac12
+$$
+and the derivative is
+$$
+L'(\hat{x}) = 2\hat{x} - 1
+$$
+
+and as we can easly see the constant part didnt contribute at all
 
 """
 

@@ -63,11 +63,8 @@ class BiasTrick(object):
         #  Add a 1 at the beginning of the given tensor's feature dimension.
         #  Hint: See torch.cat().
         # ====== YOUR CODE: ======
-        # Create a tensor of ones with the same shape as x except for the last dimension
         ones_shape = list(x.shape)
-        ones_shape[-1] = 1  # Only 1 element in the feature dimension
+        ones_shape[-1] = 1
         ones = torch.ones(ones_shape, dtype=x.dtype, device=x.device)
-
-        # Concatenate along the last dimension (feature dimension)
         return torch.cat([ones, x], dim=-1)
         # ========================

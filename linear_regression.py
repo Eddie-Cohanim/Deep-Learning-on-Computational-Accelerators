@@ -51,16 +51,14 @@ class LinearRegressor(BaseEstimator, RegressorMixin):
 
         w_opt = None
         # ====== YOUR CODE: ======
-        # Get dimensions
         N, D = X.shape
 
-        # Create identity matrix for regularization
-        I = np.eye(D)
+        reg_matrix = N * self.reg_lambda * np.eye(D)
+        reg_matrix[0, 0] = 0
 
-        # Closed-form solution: w_opt = (X^T X + λI)^(-1) X^T y
         XtX = np.dot(X.T, X)
         Xty = np.dot(X.T, y)
-        w_opt = np.dot(np.linalg.inv(XtX + self.reg_lambda * I), Xty)
+        w_opt = np.dot(np.linalg.inv(XtX + reg_matrix), Xty)
         # ========================
 
         self.weights_ = w_opt
@@ -86,17 +84,13 @@ def fit_predict_dataframe(
     """
     # TODO: Implement according to the docstring description.
     # ====== YOUR CODE: ======
-    # Extract target values
     y = df[target_name].values
 
-    # Extract features
     if feature_names is None:
-        # Use all columns except the target
         feature_names = [col for col in df.columns if col != target_name]
 
     X = df[feature_names].values
 
-    # Fit and predict
     y_pred = model.fit_predict(X, y)
     # ========================
     return y_pred
@@ -121,9 +115,7 @@ class BiasTrickTransformer(BaseEstimator, TransformerMixin):
         xb = None
         # ====== YOUR CODE: ======
         N = X.shape[0]
-        # Create column of ones with shape (N, 1)
         ones = np.ones((N, 1))
-        # Horizontally stack ones with X
         xb = np.hstack([ones, X])
         # ========================
 
@@ -141,7 +133,10 @@ class BostonFeaturesTransformer(BaseEstimator, TransformerMixin):
         # TODO: Your custom initialization, if needed
         # Add any hyperparameters you need and save them as above
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        # Feature indices (accounting for bias column at index 0)
+        self.crim_idx = 1   # CRIM is at index 0, but becomes 1 after bias trick
+        self.chas_idx = 4   # CHAS is at index 3, but becomes 4 after bias trick
+        self.lstat_idx = 13 # LSTAT is at index 12, but becomes 13 after bias trick
         # ========================
 
     def fit(self, X, y=None):
@@ -163,7 +158,20 @@ class BostonFeaturesTransformer(BaseEstimator, TransformerMixin):
 
         X_transformed = None
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        # Make a copy to avoid modifying the original data
+        X_transformed = X.copy()
+
+        # Apply log transformation to CRIM and LSTAT features
+        # Add small epsilon to avoid log(0) issues
+        X_transformed[:, self.crim_idx] = np.log(X_transformed[:, self.crim_idx] + 1e-10)
+        X_transformed[:, self.lstat_idx] = np.log(X_transformed[:, self.lstat_idx] + 1e-10)
+
+        # Remove the CHAS feature (Charles River dummy variable)
+        X_transformed = np.delete(X_transformed, self.chas_idx, axis=1)
+
+        # Generate polynomial features
+        poly = PolynomialFeatures(degree=self.degree, include_bias=False)
+        X_transformed = poly.fit_transform(X_transformed)
         # ========================
 
         return X_transformed
@@ -187,22 +195,16 @@ def top_correlated_features(df: DataFrame, target_feature, n=5):
     # TODO: Calculate correlations with target and sort features by it
 
     # ====== YOUR CODE: ======
-    # Calculate correlation matrix
     corr_matrix = df.corr()
 
-    # Get correlations with the target feature
     target_corr = corr_matrix[target_feature].copy()
 
-    # Remove the target feature itself (correlation with itself is 1.0)
     target_corr = target_corr.drop(target_feature)
 
-    # Sort by absolute value of correlation (descending) to get strongest correlations
     target_corr_sorted = target_corr.abs().sort_values(ascending=False)
 
-    # Get top n features
     top_n_features = target_corr_sorted.head(n).index.tolist()
 
-    # Get the actual correlation values (with sign) for those features
     top_n_corr = [target_corr[feature] for feature in top_n_features]
     # ========================
 
@@ -234,11 +236,8 @@ def r2_score(y: np.ndarray, y_pred: np.ndarray):
 
     # TODO: Implement R^2 using numpy.
     # ====== YOUR CODE: ======
-    # Calculate sum of squared residuals
     ss_res = np.sum((y - y_pred) ** 2)
-    # Calculate total sum of squares
     ss_tot = np.sum((y - np.mean(y)) ** 2)
-    # R^2 = 1 - (SS_res / SS_tot)
     r2 = 1 - (ss_res / ss_tot)
     # ========================
     return r2
@@ -272,7 +271,33 @@ def cv_best_hyperparams(
     #  - You can use MSE or R^2 as a score.
 
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    from sklearn.model_selection import GridSearchCV
+    from sklearn.metrics import make_scorer
+
+    # Define parameter grid for cross-validation
+    # Parameter names follow sklearn pipeline convention: stepname__parametername
+    param_grid = {
+        'bostonfeaturestransformer__degree': degree_range,
+        'linearregressor__reg_lambda': lambda_range
+    }
+
+    # Create a scorer for MSE (negative because GridSearchCV maximizes scores)
+    mse_scorer = make_scorer(mse_score, greater_is_better=False)
+
+    # Perform grid search with k-fold cross validation
+    grid_search = GridSearchCV(
+        estimator=model,
+        param_grid=param_grid,
+        cv=k_folds,
+        scoring=mse_scorer,
+        n_jobs=-1  # Use all available CPU cores
+    )
+
+    # Fit the grid search
+    grid_search.fit(X, y)
+
+    # Return the best hyperparameters
+    best_params = grid_search.best_params_
     # ========================
 
     return best_params

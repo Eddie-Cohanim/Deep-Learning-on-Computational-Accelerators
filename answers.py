@@ -84,25 +84,27 @@ Dark regions correspond to negative weights, which penalize the presence of pixe
 of pixel importance: the model assigns high weight to strokes and shapes that commonly appear in a digit, and negative weight to regions 
 where pixels should not appear. For example, in the digit 0, the model expects a dark central region, reflecting the hollow center
 characteristic of zeros. White pixels appearing in that region would significantly lower the score. Because some digits share 
-geometric similarities, such as 4 and 9, variations in handwriting may activate weight patterns associated with the wrong digit,
-resulting in misclassification.
+geometric similarities, such as 7 and 9, 4 and 9 or 5 and 6. therefore variations in handwriting may activate weight patterns associated
+with the wrong digit, resulting in misclassification.
+
 From the visualization of the learned features, we can also infer that the model captures the main structural characteristics
-of each digit rather than memorizing exact pixel arrangements. For instance, the digit 4 often has a disconnected top and a strong
-vertical stroke on the right, while the digit 9 usually has a connected circular top region and a downward curve. These consistent 
+of each digit rather than memorizing exact pixel arrangements. For instance, the digit 5 often has a disconnected bottem left and a strong
+vertical stroke on the left, while the digit 6 usually has a connected circular bottom region with a downward curve above. These consistent 
 visual cues help the model distinguish between digits by focusing on edges, curves, and connectivity patterns that define each one.
 
 """
 
 part2_q3 = r"""
 **Your answer:**
+Based on the training loss graph, the chosen learning rate appears to be good. The loss decreases smoothly and consistently 
+throughout the epochs without oscillations or divergence, which indicates stable learning. If the learning rate were too low,
+the loss curve would decrease very slowly and appear almost flat. If it were too high, the curve would show instability with
+sharp jumps or even increases in loss due to overshooting.
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+From the accuracy graph, the model is slightly overfitted to the training set. The training accuracy is consistently a bit higher
+than the test accuracy, although both curves remain close and follow a similar trend. This small gap indicates mild overfitting.
+A highly overfitted model would show a large accuracy gap, while an underfitted model would have low accuracy on both the training
+and test sets.
 
 """
 
@@ -114,19 +116,18 @@ An equation: $e^{i\pi} -1 = 0$
 part3_q1 = r"""
 **Your answer:**
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+The ideal residual plot would show all errors equal to zero, which would appear as a perfectly straight horizontal line at the zero
+level. In that case, the MSE would also be 0. Of course, this rarely happens in practice, but it serves as the
+theoretical benchmark. The trained model appears to fit the data well, as both the training and test points cluster closely and
+follow a similar pattern. The residual plot after cross validation indicates that the final model performs better than the
+model that was restricted to the top five features. The residuals are more tightly concentrated around the zero line and show a more
+consistent pattern. This improvement is supported by a lower MSE. In addition, the final model produces noticeably fewer outliers in
+the residuals, suggesting better overall predictive stability.
 
 """
 
 part3_q2 = r"""
 **Your answer:**
-
 **1.**
 It's still a linear regression model because its still linear in its parameters.
 Even if we apply a non-linear feature mapping such as
@@ -153,8 +154,6 @@ in the original feature space, it no longer appears linear. Instead, the mapping
 bend or curve the hyperplane, producing a non-linear decision boundary in the
 original input space. In this way, linear models gain the ability to separate data
 that is not linearly separable in the raw feature space.
-
-
 
 """
 
@@ -242,7 +241,7 @@ $$
 L'(\hat{x}) = 2\hat{x} - 1
 $$
 
-and as we can easly see the constant part didnt contribute at all
+and as we can easly see the constant part didnt contribute at all.
 
 """
 

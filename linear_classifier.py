@@ -45,9 +45,7 @@ class LinearClassifier(object):
 
         y_pred, class_scores = None, None
         # ====== YOUR CODE: ======
-        # Calculate class scores: x @ weights gives (N, n_classes)
         class_scores = x @ self.weights
-        # Get the class with highest score for each sample
         y_pred = torch.argmax(class_scores, dim=1)
         # ========================
 
@@ -105,61 +103,47 @@ class LinearClassifier(object):
             #     using the weight_decay parameter.
 
             # ====== YOUR CODE: ======
-            # Training phase
             total_train_loss = 0
             total_train_correct = 0
             total_train_samples = 0
 
             for x_batch, y_batch in dl_train:
-                # Forward pass
                 y_pred, class_scores = self.predict(x_batch)
 
-                # Calculate loss
                 batch_loss = loss_fn(x_batch, y_batch, class_scores, y_pred)
 
-                # Add regularization term (L2 regularization)
                 reg_loss = 0.5 * weight_decay * torch.sum(self.weights ** 2)
                 total_loss = batch_loss + reg_loss
 
-                # Calculate gradient
                 grad = loss_fn.grad()
 
-                # Add regularization gradient
                 grad = grad + weight_decay * self.weights
 
-                # Update weights using gradient descent
                 self.weights = self.weights - learn_rate * grad
 
-                # Accumulate statistics
                 total_train_loss += batch_loss.item() * x_batch.shape[0]
                 total_train_correct += (y_pred == y_batch).sum().item()
                 total_train_samples += x_batch.shape[0]
 
-            # Calculate average training loss and accuracy
             avg_train_loss = total_train_loss / total_train_samples
             train_accuracy = total_train_correct / total_train_samples
 
             train_res.loss.append(avg_train_loss)
             train_res.accuracy.append(train_accuracy * 100)
 
-            # Validation phase
             total_valid_loss = 0
             total_valid_correct = 0
             total_valid_samples = 0
 
             for x_batch, y_batch in dl_valid:
-                # Forward pass (no weight updates)
                 y_pred, class_scores = self.predict(x_batch)
 
-                # Calculate loss
                 batch_loss = loss_fn(x_batch, y_batch, class_scores, y_pred)
 
-                # Accumulate statistics
                 total_valid_loss += batch_loss.item() * x_batch.shape[0]
                 total_valid_correct += (y_pred == y_batch).sum().item()
                 total_valid_samples += x_batch.shape[0]
 
-            # Calculate average validation loss and accuracy
             avg_valid_loss = total_valid_loss / total_valid_samples
             valid_accuracy = total_valid_correct / total_valid_samples
 
@@ -185,14 +169,11 @@ class LinearClassifier(object):
         #  The output shape should be (n_classes, C, H, W).
 
         # ====== YOUR CODE: ======
-        # weights is (n_features, n_classes)
-        # If has_bias, skip the first feature (bias term)
         if has_bias:
-            weights_no_bias = self.weights[1:, :]  # (n_features-1, n_classes)
+            weights_no_bias = self.weights[1:, :]
         else:
-            weights_no_bias = self.weights  # (n_features, n_classes)
+            weights_no_bias = self.weights
 
-        # Transpose to (n_classes, n_features) and reshape to (n_classes, C, H, W)
         w_images = weights_no_bias.T.reshape(self.n_classes, *img_shape)
         # ========================
 
@@ -207,7 +188,7 @@ def hyperparams():
     #  to pass.
     # ====== YOUR CODE: ======
     hp['weight_std'] = 0.001
-    hp['learn_rate'] = 0.1
+    hp['learn_rate'] = 0.01
     hp['weight_decay'] = 0.001
     # ========================
 

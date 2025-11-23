@@ -67,18 +67,14 @@ def create_train_validation_loaders(
     valid_size = int(validation_ratio * total_size)
     train_size = total_size - valid_size
 
-    # Create random permutation of indices
     indices = torch.randperm(total_size).tolist()
 
-    # Split indices into train and validation
     train_indices = indices[:train_size]
     valid_indices = indices[train_size:]
 
-    # Create samplers
     train_sampler = torch.utils.data.SubsetRandomSampler(train_indices)
     valid_sampler = torch.utils.data.SubsetRandomSampler(valid_indices)
 
-    # Create data loaders
     dl_train = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, sampler=train_sampler, num_workers=num_workers
     )

@@ -52,26 +52,17 @@ class SVMHingeLoss(ClassifierLoss):
 
         loss = None
         # ====== YOUR CODE: ======
-        N = x.shape[0]  # Number of samples
-        C = x_scores.shape[1]  # Number of classes
+        N = x.shape[0]
+        C = x_scores.shape[1]
 
-        # Get the scores of the correct classes for each sample
-        # y is (N,), x_scores is (N, C)
-        # We need to gather scores at indices specified by y
-        correct_class_scores = x_scores[torch.arange(N), y]  # (N,)
+        correct_class_scores = x_scores[torch.arange(N), y]
 
-        # Compute the margin matrix M where M[i,j] = s_j - s_{y_i} + delta
-        # Broadcast: x_scores is (N, C), correct_class_scores is (N,)
-        # We need to reshape correct_class_scores to (N, 1) for broadcasting
-        M = x_scores - correct_class_scores.unsqueeze(1) + self.delta  # (N, C)
+        M = x_scores - correct_class_scores.unsqueeze(1) + self.delta
 
-        # Apply the hinge: max(0, M[i,j])
         M = torch.clamp(M, min=0)
 
-        # Set the loss for the correct class to 0 (we don't want to count it)
         M[torch.arange(N), y] = 0
 
-        # Sum over all classes and samples, then average
         loss = M.sum() / N
         # ========================
 
@@ -95,27 +86,18 @@ class SVMHingeLoss(ClassifierLoss):
 
         grad = None
         # ====== YOUR CODE: ======
-        # Retrieve saved context from loss calculation
         M = self.grad_ctx['M']
         x = self.grad_ctx['x']
         y = self.grad_ctx['y']
         N = self.grad_ctx['N']
 
-        # Create matrix G where G[i,j] indicates the gradient coefficient
-        # G[i,j] = 1 if M[i,j] > 0 (margin violated for class j)
-        # G[i,y_i] = -(number of classes with violated margins for sample i)
+        G = (M > 0).float()
 
-        G = (M > 0).float()  # (N, C) - 1 where margin is violated, 0 otherwise
+        violated_counts = G.sum(dim=1)
 
-        # For each sample, count how many classes had violated margins
-        # This is the sum across classes for each sample
-        violated_counts = G.sum(dim=1)  # (N,)
-
-        # Set the gradient for the correct class to be negative of the count
         G[torch.arange(N), y] = -violated_counts
 
-        # Compute gradient: X^T @ G, then average over samples
-        grad = (x.T @ G) / N  # (D, C)
+        grad = (x.T @ G) / N
         # ========================
 
         return grad

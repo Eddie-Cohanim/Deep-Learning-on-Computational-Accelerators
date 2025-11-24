@@ -19,13 +19,12 @@ task with classes "CAT" and "DOG", it is possible that the test set accidentally
 only class "CAT". in that case, the model is never trained on class "DOG", therefore leading
 to poor results
 
-**2. False.** Cross-validation is performed only on the training set to prevent any leakage from
-the test set. In this procedure, the training data is split into K folds. Each fold takes a turn
-serving as the validation set, while the remaining K-1 folds are used for training. This setup lets
-the model be evaluated on data it hasn't seen during each training run, but still keeps the test set
-untouched. The test set is used only at the very end to assess the final model's performance on 
-unseen data. (Cross-validation provides a more reliable way to tune hyperparameters than relying on
-a single validation split.)
+**2. False.** Cross-validation is done only on the training set to make sure no information slips in
+from the test set. The training data is split into K folds, and each fold gets a turn as the validation set
+while the rest are used for training. This lets the model be checked on data it hasn’t seen yet, without
+touching the test set. the test set is kept aside until the very end, when all hyperparameters are already chosen.
+If the test set were used during cross-validation, the model-selection process
+would become biased toward it, and the final test score wouldnt really reflect how the model handles new data.
 
 **3. True.** During cross-validation, the model is trained using only a portion of the training data
 while the remaining fold is kept completely separate and used as a validation set. Because the model has

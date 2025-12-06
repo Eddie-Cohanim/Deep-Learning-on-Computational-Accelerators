@@ -9,28 +9,68 @@ math (delimited with $$).
 # Part 1 (Backprop) answers
 
 part1_q1 = r"""
-**Your answer:**
+**Answer 1:**$\\$
+The shape of the resulting tensor is ${R}^{64x512x64x1024}$.
 
+**Answer 2:**$\\$
+Since the Jacobian matrix will be a block matrix of NxN, where each
+block is 1024x512, we can index the samples using n,m such that the
+block(n,m) is the jacobian matrix of the output of sample n over the
+input of sample m, $\frac{\partial Y^{(n)}}{\partial X^{(m)}}$. and since the linear layers act independently
+per sample we get:
+$${Y}^{n}=W*{X}^{n}$$
 
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+now we shall look at 2 differenct cases:$\\$
+$\hspace{2em}$ **i**. $n \neq m$ : 
+$$\frac{\partial Y^{(n)}}{\partial X^{(m)}} = 0$$
+$\hspace{4em}$ Which means there is no dependence between samples.$\\$
 
+$\hspace{2em}$ **ii**. $n = m$ :
+$$\frac{\partial Y^{(n)}}{\partial X^{(m)}} = W$$
+$\hspace{4em}$ Which means that we get the same linear map for every
+sample.$\\$
+
+Therefore, The block matrix is block diagonal with N identical
+diagonal blocks equal to W and all off diagonal blocks equal zero.
+
+**Answer 3:**$\\$
+Since the Jacobian matrix is constructed from blocks on the diagonal
+that are W, with all other blocks equaling 0, there is no need to
+construct the whole matrix, instead we can just construct the non zero
+elemnts in the matrix, which is the blocks on the diagonal, and since
+they are all W we only need W once, which is the shape of
+${R}^{512x1024}$
+
+**Answer 4:**$\\$
+beacuse the Jacobian matrix is block diagonal with W equaling the blocks,
+we can calculate the downstream gradient using the chain rule.$\\$
+For each sample we get:
+$$y = Wx $$ $$\frac{\partial Y}{\partial X} = W$$ 
+
+Therefor we get:
+$$\frac{\partial L}{\partial x} = (\frac{\partial y}{\partial x})^{\top} \frac{\partial L}{\partial y}
+ = W^{\top}\delta y$$
+Which leads to:
+$$\delta X = \delta YW$$
+
+**Answer 5:**$\\$
+When differntiating, we get that 
+$\frac{\partial {Y}_{n,m}}{\partial {W}_{k,i}}$ equals either ${X}_{n,i}$ when
+$k = m$ **or** $0$ otherwise$\\$
+Therefore, the JAcobian matrix in non zero only along the output dimension diagonal and its
+shape is: 
+$$R^{64x512x512x1024}$$
+with each$(m,k)$ slice forming an $(512x1024)$ block.
 """
 
 part1_q2 = r"""
-**Your answer:**
+**Answer:**$\\$
+the second order derivative can be useful, such as when the loss landscape is curved very
+differently along different directions(flat in one direction but very steep in another) will
+cause the gradient descent to take small, slow steps. using the second order derivative will
+allow the optimizer to take large steps in flat directions and small steps in steeper ones,
+leading to faster convergance.
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
 
 """
 

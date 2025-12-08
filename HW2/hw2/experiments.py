@@ -45,7 +45,74 @@ def mlp_experiment(
     #  Note: use print_every=0, verbose=False, plot=False where relevant to prevent
     #  output from this function.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    x0, _ = next(iter(dl_train))
+    in_dim = x0.shape[1]
+
+    # dims: hidden layers + 2-class output
+    dims = [width] * depth + [2]
+
+    # IMPORTANT: use activation *names* so MLP can look them up in ACTIVATIONS.
+    # As Thanh suggested: use tanh-based non-linearities.
+    nonlins = [torch.nn.Tanh()] * depth + [torch.nn.Identity()]
+    core_model = MLP(in_dim=in_dim, dims=dims, nonlins=nonlins)
+    model = BinaryClassifier(core_model, positive_class=1, threshold=0.5)
+
+    # Keep everything on CPU so select_roc_thresh can call .numpy() safely
+    device = torch.device("cpu")
+    model.to(device)
+
+    # ----- train with ClassifierTrainer -----
+    loss_fn = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+
+    trainer = ClassifierTrainer(
+        model=model,
+        optimizer=optimizer,
+        loss_fn=loss_fn,
+        device=device,
+    )
+
+    trainer.fit(
+        dl_train,
+        dl_valid,
+        num_epochs=n_epochs,
+        print_every=0,
+        verbose=False,
+    )
+
+    # ----- gather full validation & test tensors -----
+    xs_val, ys_val = [], []
+    with torch.no_grad():
+        for xb, yb in dl_valid:
+            xs_val.append(xb.to(device))
+            ys_val.append(yb.to(device))
+    x_val = torch.cat(xs_val, dim=0)
+    y_val = torch.cat(ys_val, dim=0)
+
+    xs_test, ys_test = [], []
+    with torch.no_grad():
+        for xb, yb in dl_test:
+            xs_test.append(xb.to(device))
+            ys_test.append(yb.to(device))
+    x_test = torch.cat(xs_test, dim=0)
+    y_test = torch.cat(ys_test, dim=0)
+
+    # ----- select threshold on validation set -----
+    thresh = select_roc_thresh(model, x_val, y_val, plot=False)
+    model.threshold = thresh
+
+    # ----- validation accuracy (IN PERCENT) -----
+    with torch.no_grad():
+        y_proba_val = model.predict_proba(x_val)
+        y_hat_val = model._classify(y_proba_val)
+        valid_acc = (y_hat_val == y_val).float().mean().item() * 100.0
+
+    # ----- test accuracy (IN PERCENT) -----
+    with torch.no_grad():
+        y_proba_test = model.predict_proba(x_test)
+        y_hat_test = model._classify(y_proba_test)
+        test_acc = (y_hat_test == y_test).float().mean().item() * 100.0
+
     # ========================
     return model, thresh, valid_acc, test_acc
 

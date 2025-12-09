@@ -373,7 +373,11 @@ class Dropout(Layer):
         #  Notice that contrary to previous layers, this layer behaves
         #  differently a according to the current training_mode (train/test).
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        if self.training_mode:
+            self.mask = (torch.rand_like(x) >= self.p).float()
+            out = x * self.mask / (1 - self.p)
+        else:
+            out = x
         # ========================
 
         return out
@@ -381,7 +385,10 @@ class Dropout(Layer):
     def backward(self, dout):
         # TODO: Implement the dropout backward pass.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        if self.training_mode:
+            dx = dout * self.mask / (1 - self.p)
+        else:
+            dx = dout
         # ========================
 
         return dx

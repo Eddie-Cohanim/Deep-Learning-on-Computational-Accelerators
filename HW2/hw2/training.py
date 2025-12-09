@@ -308,7 +308,9 @@ class ClassifierTrainer(Trainer):
 class LayerTrainer(Trainer):
     def __init__(self, model, loss_fn, optimizer):
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        super().__init__(model, device=None)
+        self.loss_fn = loss_fn
+        self.optimizer = optimizer
         # ========================
 
     def train_batch(self, batch) -> BatchResult:
@@ -321,7 +323,15 @@ class LayerTrainer(Trainer):
         #  - Calculate number of correct predictions (make sure it's an int,
         #    not a tensor) as num_correct.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        X = X.view(X.shape[0], -1)
+        scores = self.model.forward(X)
+        loss = self.loss_fn.forward(scores, y)
+        derivative_of_output = self.loss_fn.backward()
+        self.model.backward(derivative_of_output)
+        self.optimizer.step()
+        self.optimizer.zero_grad()
+        prediction_of_y = torch.argmax(scores, dim=1)
+        num_correct = int(torch.sum(prediction_of_y == y).item())
         # ========================
 
         return BatchResult(loss, num_correct)
@@ -331,7 +341,11 @@ class LayerTrainer(Trainer):
 
         # TODO: Evaluate the Layer model on one batch of data.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        X = X.view(X.shape[0], -1)
+        scores = self.model.forward(X)
+        loss = self.loss_fn.forward(scores, y)
+        prediction_of_y = torch.argmax(scores, dim=1)
+        num_correct = int(torch.sum(prediction_of_y == y).item())
         # ========================
 
         return BatchResult(loss, num_correct)

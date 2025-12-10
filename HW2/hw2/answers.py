@@ -145,29 +145,49 @@ An equation: $e^{i\pi} -1 = 0$
 """
 
 part2_q2 = r"""
-**Your answer:**
-
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
-
+**Answer:**$\\$
+Yes, it is possible for test loss to decrease while test accuracy decreases when using 
+cross-entropy.
+A model can assign higher probability to the correct class without crossing the decision
+boundary needed to change the predicted label. In that case the loss goes down because
+the probabilities improved, but accuracy stays the same or even gets worse if other 
+samples flip from correct to incorrect.
 """
 
 part2_q3 = r"""
-**Your answer:**
+**Answer 3: **$\\$
+
+1. The suggested method does not produce the same gradient as full batch gradient descent.
+In gradient descent the gradient is computed across the entire dataset and averaged. 
+The proposed approach instead computes the loss for each batch, sums those losses, and 
+then backpropagates once through the total. This means the gradient is based on the sum 
+of batch losses rather than the mean across all samples, which scales the gradient and 
+changes the update step.$\\$
+
+$\hspace*{2em}$ Standard GD computes:
+$$\nabla L(\theta) = \frac{1}{N} \sum_{i=1}^{N} \nabla l(\theta; x_i, y_i)$$
+
+$\hspace*{2em}$ while the suggested approach computes:
+$$\nabla L_{\text{total}}(\theta) = \sum_{j=1}^{K} \sum_{(x_i, y_i) \in B_j} \nabla l(\theta; x_i, y_i)$$
+
+$\hspace*{2em}$ with N samples, K batches, and ${B}_{j}$ as batch j. The difference is that the gradient
+is summed instead of averaged, so the update step is larger.$\\$
+$\hspace*{2em}$ However, if the gradients are averaged across all batches by dividing by N, the result becomes 
+equivalent to standard GD.$\\$
+
+2. The out of memory issue likely came from memory resources accumulating across batches.
+If intermediate values such as activations or gradients are not released after each 
+batch, they remain stored and build up, eventually exceeding available memory. 
+During forward and backward passes, training produces many temporary tensors that 
+increase memory consumption. This effect can be reduced by releasing intermediate values 
+as soon as they are no longer required, ensuring memory is cleared between batches, 
+or applying strategies like gradient accumulation to keep usage manageable.$\\$
 
 
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
-
+3. A possible solution woulb be to backpropagate after each batch so the graph is freed
+immediately, or use gradient accumulation where each batch contributes a scaled loss
+and "loss.backward()" is called repeatedly without storing previous graphs. This 
+prevents memory growth over batches and removes the out of memory problem.$\\$
 """
 
 
@@ -226,15 +246,17 @@ An equation: $e^{i\pi} -1 = 0$
 """
 
 part3_q2 = r"""
-**Your answer:**
+**Answer:**
+When optimizing for a lower FPR, we aim to reduce false positives even if this 
+increases false negatives. This may be desirable in a system where incorrectly 
+labeling a negative instance as positive carries a higher cost than missing some 
+true positives. In such a case we accept a higher FNR because optimizing FPR is 
+more important.
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+When optimizing for a lower FNR, we want to avoid false negatives even if this 
+increases false positives. This match scenarios where failing to find a true 
+positive is more damaging than mistakenly classifying some negatives as positive. 
+Here we accept a higher FPR because optimizing FNR is the priority.
 
 """
 
@@ -365,15 +387,52 @@ An equation: $e^{i\pi} -1 = 0$
 
 
 part6_q1 = r"""
-**Your answer:**
+**Answer 1:**$\\$
+The model shows two detections labeled person with confidences 0.50 and 0.90, 
+and a third detection labeled surfboard with 0.37 confidence. None of the 
+detections match the actual objects. The bounding boxes surround dolphins 
+jumping from the water, so the model incorrectly interprets their shape and 
+posture as people and mistakes part of the tail of the dolphin on the right as a 
+surfboard. The only confident prediction is the second person box (0.90) 
+though it is still wrong. Overall performance on this image is very bad.$\\$
 
+in the second image the model detects 2 cats with confidences 0.66 and 0.39, 
+and labels one dog as dog with a confidence of 0.51. In reality the image 
+contains three dogs and one cat. It correctly identifies the dog in the center, 
+but mislabels two dogs as cats and does not detect the remaining cat at all. 
+Detection quality is better here than in the first image, yet multiple errors 
+still occur. Overall detection is usuccessful and inconsistent. $\\$
 
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+**Answer 2:**$\\$
+There are many reasons why the model might fair, for example:$\\$
+
+1. YOLOv5 is trained on COCO, which does not include a dolphin class, so it 
+must map dolphins to the closest existing label, often person. $\\$
+Solution: retrain the model with a dataset that includes dolphins, 
+dogs, and cats across diverse conditions.$\\$
+
+2. If the calsses share the same or similar features, such as dogs and cats both
+have fur, ears, four legs etc.$\\$
+Solution: train on more diverse datasets with harder examples
+and clearer inter-class boundaries.$\\$
+
+3. Insufficient training data for rare or visually similar classes.$\\$
+Solution: data augmentation, class-balanced sampling, increasing representation
+of confusing pairs in the training set.$\\$
+
+4. weak feature representation and poor calibration may lead to high confidence
+in wrong predictions.$\\$
+Solution: fixes include using calibration techniques, further 
+training, adjusting the detection layers, or increasing the strength and 
+capacity of the feature extraction.$\\$
+
+**Answer 3:**$\\$
+To attack YOLO with PGD, we introduce small, iterative perturbations to the 
+input image that increase the model's loss while remaining visually subtle. 
+PGD updates the image using the gradient of the detection loss, gradually 
+pushing the model toward errors. Since YOLO predicts both class labels and 
+bounding boxes, the attack can force misclassification, shift bounding boxes, 
+or cause missed detections.
 
 """
 
@@ -381,39 +440,49 @@ An equation: $e^{i\pi} -1 = 0$
 part6_q2 = r"""
 **Your answer:**
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+question number 2 was removed from the assignment by course staff.
 
 """
 
 
 part6_q3 = r"""
-**Your answer:**
+**Your answer:**$\\$
+image 1 "cat hidding in sofa - occlusion":$\\$
+The cat is correctly detected and classified with 0.77 confidence, and there 
+arn't any additional detections in the background. This is a case where the 
+model performs as expected, with accurate classification and localization,
+even though there was a mild case of occlusion in the image(since half of
+the cat is obstructed by the sofa).$\\$
 
+imgae 2 "street filled with cars and motorcycles - cluttered background":$\\$
+The model recognized many cars, some trucks, and a number of people, 
+although many objects remained undetected. the image contains a dense, highly 
+cluttered enviroment with overlapping objects, which leads to a hard time making
+accurate detections, therby leading to missed bounding boxes and low confidence 
+scores in several detections. This image demonstrates how crowding can reduce 
+detection coverage.$\\$
 
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
+image 3 "dog running - motion blur":$\\$
+The model successfully identified the dog with 0.83 confidence, which is high.
+This is a good result given the strong motion blur and distortion in the image. 
+However, it also incorrectly labeled part of the background as a surfboard with 
+0.55 confidence. we can infer this confusion was caused by streaks and elongated
+edges created by the motion blur. Overall, object detection is reasonably 
+accurate for the dog, but noise and blur lead to an additional false detection.
+$\\$
 
 """
 
 part6_bonus = r"""
-**Your answer:**
+**Answer:**$\\$
+Motion Blur Image:$\\$
+We applied gentle sharpening and additional contrast to the image. The dog was still
+correctly detected with 0.82 confidence, but now no surfboard was detected in 
+the background.$\\$
 
-
-Write your answer using **markdown** and $\LaTeX$:
-```python
-# A code block
-a = 2
-```
-An equation: $e^{i\pi} -1 = 0$
-
+Cluttered Background Image:$\\$
+We split the image horizontally and left the top half unchanged, while appliing 
+additional contrast to the bottom half only. This resulted in additional correct
+people detections and an elimination of a false bus detection on the left that
+overlapped with a truck detection.$\\$
 """

@@ -91,6 +91,8 @@ class CNN(nn.Module):
                 layers.append(pooling_func(**self.pooling_params)) 
 
 
+            if (i + 1) % P == 0:
+                layers.append(POOLINGS[self.pooling_type](**self.pooling_params))
         # ========================
         seq = nn.Sequential(*layers)
         return seq
@@ -110,6 +112,7 @@ class CNN(nn.Module):
             # ========================
         finally:
             torch.set_rng_state(rng_state)
+        return n_features
 
         return int(n_features)
 

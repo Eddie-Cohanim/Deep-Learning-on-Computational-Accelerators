@@ -330,7 +330,6 @@ Approximation error is the error that comes from the inherent limitations of the
 simple to represent the true underlying relationship in the data, the model will remain inaccurate even with perfect optimization 
 and infinite data. This error is caused by using an overly simple hypothesis class, such as a linear model to represent a highly 
 nonlinear problem, or by restricting the depth or width of a neural network too severely.$\\$
-
 """
 
 part3_q2 = r"""
@@ -390,7 +389,10 @@ When the width is already very large, increasing the depth gives the model extre
 many features, and stacking many such layers allows the network to fit very detailed patterns in the data. This explains why 
 the validation accuracy becomes very high. However the model can also learn the noise in 
 the dataset and be in overfitting, which is why the test accuracy does not increase in the same way and may even slightly decrease. 
+<<<<<<< HEAD
 
+=======
+>>>>>>> c7adda8 (Add Part 2 and Part 3 answers)
 
 """
 

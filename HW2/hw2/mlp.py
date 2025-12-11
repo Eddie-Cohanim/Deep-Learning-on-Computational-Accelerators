@@ -55,6 +55,7 @@ class MLP(nn.Module):
         #  - Either instantiate the activations based on their name or use the provided
         #    instances.
         # ====== YOUR CODE: ======
+        
         super().__init__()
         layers = []
         dims = [in_dim] + dims

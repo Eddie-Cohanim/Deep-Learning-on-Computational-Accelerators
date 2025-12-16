@@ -11,7 +11,7 @@ from torchvision.datasets import CIFAR10
 
 from cs236781.train_results import FitResult
 
-from .cnn import CNN, ResNet
+from .cnn import CNN, ResNet, YourCNN
 from .mlp import MLP
 from .training import ClassifierTrainer
 from .classifier import ArgMaxClassifier, BinaryClassifier, select_roc_thresh
@@ -22,6 +22,7 @@ MODEL_TYPES = {
     ###
     "cnn": CNN,
     "resnet": ResNet,
+    "yourcnn": YourCNN,
 }
 
 
@@ -174,7 +175,59 @@ def cnn_experiment(
     #   for you automatically.
     fit_res = None
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    # Expand filters_per_layer to channels based on layers_per_block
+    # e.g., if filters_per_layer=[64, 128] and layers_per_block=2
+    # then channels = [64, 64, 128, 128]
+    channels = []
+    for f in filters_per_layer:
+        channels.extend([f] * layers_per_block)
+
+    # Create data loaders
+    dl_train = DataLoader(ds_train, batch_size=bs_train, shuffle=True)
+    dl_test = DataLoader(ds_test, batch_size=bs_test, shuffle=False)
+
+    # Get input size from first sample
+    sample_image, _ = ds_train[0]
+    in_size = sample_image.shape  # Should be (C, H, W)
+
+    # Create core model using the specified model class
+    core_model = model_cls(
+        in_size=in_size,
+        out_classes=10,  # CIFAR-10 has 10 classes
+        channels=channels,
+        pool_every=pool_every,
+        hidden_dims=hidden_dims,
+        conv_params=dict(kernel_size=3, padding=1),
+        pooling_params=dict(kernel_size=2),
+    )
+
+    # Wrap the core model in ArgMaxClassifier for multi-class classification
+    model = ArgMaxClassifier(core_model)
+    model = model.to(device)
+
+    # Create loss function
+    loss_fn = torch.nn.CrossEntropyLoss()
+
+    # Create optimizer with weight decay for L2 regularization
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
+
+    # Create trainer
+    trainer = ClassifierTrainer(
+        model=model,
+        loss_fn=loss_fn,
+        optimizer=optimizer,
+        device=device,
+    )
+
+    # Train the model
+    fit_res = trainer.fit(
+        dl_train=dl_train,
+        dl_test=dl_test,
+        num_epochs=epochs,
+        checkpoints=checkpoints,
+        early_stopping=early_stopping,
+        max_batches=batches,
+    )
     # ========================
 
     save_experiment(run_name, out_dir, cfg, fit_res)

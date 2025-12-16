@@ -91,8 +91,6 @@ class CNN(nn.Module):
                 layers.append(pooling_func(**self.pooling_params)) 
 
 
-            if (i + 1) % P == 0:
-                layers.append(POOLINGS[self.pooling_type](**self.pooling_params))
         # ========================
         seq = nn.Sequential(*layers)
         return seq
@@ -112,7 +110,6 @@ class CNN(nn.Module):
             # ========================
         finally:
             torch.set_rng_state(rng_state)
-        return n_features
 
         return int(n_features)
 
@@ -381,3 +378,85 @@ class ResNet(CNN):
         seq = nn.Sequential(*layers)
         return seq
 
+
+class YourCNN(CNN):
+    """
+    Custom CNN architecture with improvements over the basic CNN.
+    Includes batch normalization, dropout, and improved architecture design.
+    """
+    def __init__(
+        self,
+        in_size,
+        out_classes,
+        channels,
+        pool_every,
+        hidden_dims,
+        batchnorm=True,
+        dropout=0.2,
+        **kwargs,
+    ):
+        """
+        :param in_size: Size of input images, e.g. (C,H,W).
+        :param out_classes: Number of classes to output in the final layer.
+        :param channels: A list of length N containing the number of
+            (output) channels in each conv layer.
+        :param pool_every: P, the number of conv layers before each pooling.
+        :param hidden_dims: List of length M containing hidden dimensions of
+            each Linear layer (not including the output layer).
+        :param batchnorm: Whether to use batch normalization between layers.
+        :param dropout: Dropout probability (0 means no dropout).
+        :param kwargs: Any additional arguments supported by CNN.
+        """
+        self.batchnorm = batchnorm
+        self.dropout = dropout
+
+        # Set default conv_params and pooling_params if not provided
+        if 'conv_params' not in kwargs:
+            kwargs['conv_params'] = dict(kernel_size=3, padding=1)
+        if 'pooling_params' not in kwargs:
+            kwargs['pooling_params'] = dict(kernel_size=2)
+
+        super().__init__(
+            in_size, out_classes, channels, pool_every, hidden_dims, **kwargs
+        )
+
+    def _make_feature_extractor(self):
+        in_channels, in_h, in_w = tuple(self.in_size)
+
+        layers = []
+        # ====== YOUR CODE: ======
+        # Create an improved feature extractor with:
+        # - Batch normalization after each conv (if batchnorm=True)
+        # - Dropout after activation (if dropout > 0)
+        # - Efficient pooling strategy
+        activation_func = ACTIVATIONS[self.activation_type]
+        pooling_func = POOLINGS[self.pooling_type]
+
+        for i in range(len(self.channels)):
+            actual_layer_num = i + 1
+
+            # Convolution
+            layers.append(
+                nn.Conv2d(in_channels, self.channels[i], **self.conv_params)
+            )
+
+            # Batch normalization (before activation)
+            if self.batchnorm:
+                layers.append(nn.BatchNorm2d(self.channels[i]))
+
+            # Activation
+            layers.append(activation_func(**self.activation_params))
+
+            # Dropout (after activation)
+            if self.dropout > 0:
+                layers.append(nn.Dropout2d(p=self.dropout))
+
+            in_channels = self.channels[i]
+
+            # Pooling every P layers
+            if actual_layer_num % self.pool_every == 0:
+                layers.append(pooling_func(**self.pooling_params))
+
+        # ========================
+        seq = nn.Sequential(*layers)
+        return seq

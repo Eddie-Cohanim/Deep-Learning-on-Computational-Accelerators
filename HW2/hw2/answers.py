@@ -60,7 +60,7 @@ $k = m$ **or** $0$ otherwise$\\$
 Therefore, the JAcobian matrix in non zero only along the output dimension diagonal and its
 shape is: 
 $$R^{64x512x512x1024}$$
-with each$(m,k)$ slice forming an $(512x1024)$ block.
+with each $(m,k)$ slice forming an $(512x1024)$ block.
 """
 
 part1_q2 = r"""
@@ -156,7 +156,6 @@ prevents overfitting, too much dropout hurts the model's ability to learn meanin
 """
 
 part2_q2 = r"""
-**Your answer:**
 **Answer:**$\\$
 Yes, it is possible for test loss to decrease while test accuracy decreases when using 
 cross-entropy.
@@ -165,45 +164,6 @@ boundary needed to change the predicted label. In that case the loss goes down b
 the probabilities improved, but accuracy stays the same or even gets worse if other 
 samples flip from correct to incorrect.
 
-"""
-
-part2_q3 = r"""
-**Answer 1:**$\\$
-
-Gradient Descent and Stochastic Gradient Descent are both optimization methods used to minimize a loss 
-function by updating model parameters in the direction of the negative gradient. 
-Bth rely on the same mathematical principle of following the gradient to reduce error, and both aim to find parameter 
-values that minimize the risk. In both methods, learning is controlled by a learning rate, and convergence behavior 
-is influenced by factors such as model conditioning, loss surface geometry, and step size. $\\$
-
-Gradient Descent and Stochastic Gradient Descent differ mainly in how the gradient is calculated at each step.
-In GD, the gradient is calculated using the entire training dataset, meaning that every parameter update is based on the exact 
-direction of the total loss. This makes each update very stable and consistent, but also computationally expensive. 
-In contrast, SGD estimates the gradient using only a single training example (or a small batch). As a result, each 
-update is only an approximation of the true gradient and contains randomness, which makes the updates much cheaper but 
-also noisier.$\\$
-
-Another important difference lies in scalability and generalization. GD does not scale well to large datasets because of 
-its high computational and memory cost on the other hand the noise in SGD can act as a form of regularization that helps 
-the model escape poor local minima and saddle points, often leading to better generalization on unseen data.
-
-**Answer 2:**$\\$
-
-Momentum can be applied to Gradient Descent, but its effect is usually limited compared to its 
-impact in Stochastic Gradient Descent. Momentum is most useful when the optimization process suffers from 
-noisy and unstable updates, since it helps smooth the direction of movement and speeds up progress along 
-consistent directions. In full Gradient Descent, however, the gradients are computed over the entire dataset, 
-so the updates are already stable and accurate. Because of this, momentum does not have as much to improve, 
-and while it can still provide a small speed-up in difficult optimization landscapes, its overall contribution is 
-much less significant than in SGD.
-
-**Answer:**$\\$
-Yes, it is possible for test loss to decrease while test accuracy decreases when using 
-cross-entropy.
-A model can assign higher probability to the correct class without crossing the decision
-boundary needed to change the predicted label. In that case the loss goes down because
-the probabilities improved, but accuracy stays the same or even gets worse if other 
-samples flip from correct to incorrect.
 """
 
 part2_q3 = r"""
@@ -236,7 +196,7 @@ so the updates are already stable and accurate. Because of this, momentum does n
 and while it can still provide a small speed-up in difficult optimization landscapes, its overall contribution is 
 much less significant than in SGD.$\\$
 
-**Answer 3: **$\\$
+**Answer 3:**$\\$
 
 1. The suggested method does not produce the same gradient as full batch gradient descent.
 In gradient descent the gradient is computed across the entire dataset and averaged. 
@@ -389,11 +349,6 @@ When the width is already very large, increasing the depth gives the model extre
 many features, and stacking many such layers allows the network to fit very detailed patterns in the data. This explains why 
 the validation accuracy becomes very high. However the model can also learn the noise in 
 the dataset and be in overfitting, which is why the test accuracy does not increase in the same way and may even slightly decrease. 
-<<<<<<< HEAD
-
-=======
->>>>>>> c7adda8 (Add Part 2 and Part 3 answers)
-
 """
 
 # ==============

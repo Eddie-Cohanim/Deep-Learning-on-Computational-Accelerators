@@ -111,6 +111,15 @@ class Trainer(abc.ABC):
                 epochs_without_improvement += 1
                 # ========================
 
+            # ====== YOUR CODE: ======
+            actual_num_epochs += 1
+
+            # Early stopping check
+            if early_stopping is not None and epochs_without_improvement >= early_stopping:
+                self._print(f"Early stopping after {actual_num_epochs} epochs without improvement", verbose=True)
+                break
+            # ========================
+
         return FitResult(actual_num_epochs, train_loss, train_acc, test_loss, test_acc)
 
     def save_checkpoint(self, checkpoint_filename: str):

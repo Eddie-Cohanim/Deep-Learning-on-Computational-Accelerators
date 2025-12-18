@@ -156,7 +156,6 @@ prevents overfitting, too much dropout hurts the model's ability to learn meanin
 """
 
 part2_q2 = r"""
-**Your answer:**
 **Answer:**$\\$
 Yes, it is possible for test loss to decrease while test accuracy decreases when using 
 cross-entropy.

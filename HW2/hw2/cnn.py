@@ -80,19 +80,24 @@ class CNN(nn.Module):
         #  Note: If N is not divisible by P, then N mod P additional
         #  CONV->ACTs should exist at the end, without a POOL after them.
         # ====== YOUR CODE: ======
+
+        min_hw = min(in_h, in_w)
+        num_pools = len(self.channels) // self.pool_every
+        if min_hw // (2 ** num_pools) < 1:
+            raise ValueError()
+    
+
         activation_func = ACTIVATIONS[self.activation_type]
         pooling_func = POOLINGS[self.pooling_type]
-        for i in range(len(self.channels)):
-            actual_layer_num = i + 1
-            layers.append(nn.Conv2d(in_channels, self.channels[i], **self.conv_params))
+        for i, out_channels in enumerate(self.channels, start=1):
+            layers.append(nn.Conv2d(in_channels, out_channels, **self.conv_params))
             layers.append(activation_func(**self.activation_params))
-            in_channels = self.channels[i]
-            if (actual_layer_num % (self.pool_every) == 0 ):
-                layers.append(pooling_func(**self.pooling_params)) 
+            in_channels = out_channels
+
+            if i % self.pool_every == 0:
+                layers.append(pooling_func(**self.pooling_params))
 
 
-            if (i + 1) % P == 0:
-                layers.append(POOLINGS[self.pooling_type](**self.pooling_params))
         # ========================
         seq = nn.Sequential(*layers)
         return seq
@@ -112,7 +117,6 @@ class CNN(nn.Module):
             # ========================
         finally:
             torch.set_rng_state(rng_state)
-        return n_features
 
         return int(n_features)
 
@@ -203,40 +207,40 @@ class ResidualBlock(nn.Module):
         main_layers = []
         current_in = in_channels
 
-        for i, (out_ch, k) in enumerate(zip(channels, kernel_sizes)):
-            # conv
+        for i, (out_channels, k) in enumerate(zip(channels, kernel_sizes)):
+            
             main_layers.append(
-                nn.Conv2d(current_in, out_ch,
+                nn.Conv2d(current_in, out_channels,
                           kernel_size=k,
                           padding=k // 2,
                           bias=True)
             )
 
-            # optional dropout + BN + activation after all but last conv
+            
             if i < len(channels) - 1:
                 if dropout > 0:
                     main_layers.append(nn.Dropout2d(p=dropout))
                 if batchnorm:
-                    main_layers.append(nn.BatchNorm2d(out_ch))
+                    main_layers.append(nn.BatchNorm2d(out_channels))
                 main_layers.append(
                     ACTIVATIONS[activation_type](**activation_params)
                 )
 
-            current_in = out_ch
+            current_in = out_channels
 
         self.main_path = nn.Sequential(*main_layers)
 
         # -------- shortcut_path --------
         shortcut_layers = []
         if in_channels != channels[-1]:
-            # 1×1 conv to match channel dim, no bias
+            
             shortcut_layers.append(
                 nn.Conv2d(in_channels, channels[-1],
                           kernel_size=1,
                           bias=False)
             )
 
-        # second Sequential: either 1×1 conv, or identity
+        
         self.shortcut_path = (
             nn.Sequential(*shortcut_layers)
             if shortcut_layers
@@ -346,6 +350,10 @@ class ResNet(CNN):
         # ====== YOUR CODE: ======
         pooling = POOLINGS[self.pooling_type](**self.pooling_params)
 
+        num_pools = len(self.channels) // self.pool_every
+        min_hw = min(in_h, in_w)
+        if min_hw // (2 ** num_pools) < 1:
+            raise ValueError()
         
         for i in range(0, len(self.channels), self.pool_every):
             j = min(i + self.pool_every, len(self.channels))

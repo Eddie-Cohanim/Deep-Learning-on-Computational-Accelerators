@@ -1,0 +1,45 @@
+{
+  "config": {
+    "run_name": "final_test_cnn",
+    "out_dir": "./results",
+    "seed": 42,
+    "device": null,
+    "bs_train": 50,
+    "bs_test": 12,
+    "batches": 2,
+    "epochs": 2,
+    "early_stopping": 5,
+    "checkpoints": null,
+    "lr": 0.001,
+    "reg": 0.001,
+    "filters_per_layer": [
+      16
+    ],
+    "layers_per_block": 2,
+    "pool_every": 2,
+    "hidden_dims": [
+      64
+    ],
+    "model_type": "cnn",
+    "kw": {}
+  },
+  "results": {
+    "num_epochs": 2,
+    "train_loss": [
+      2.3095147609710693,
+      2.3058671951293945
+    ],
+    "train_acc": [
+      10.0,
+      8.0
+    ],
+    "test_loss": [
+      2.280251979827881,
+      2.2818762063980103
+    ],
+    "test_acc": [
+      12.5,
+      12.5
+    ]
+  }
+}

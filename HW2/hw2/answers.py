@@ -470,14 +470,14 @@ $$
 \Big(\prod_{\ell=0}^{k-1}\|M^{(\ell)}\|\Big)\Big\|\frac{\partial L}{\partial x^{(k)}}\Big\|.
 $$
 
-The condition $|M_{ij}|<1$ indicates small initialization and as the question says that is as in Xavier-style initialization. For the analysis, we can assume this also implies a bound on the operator norm, $\|M^{(\ell)}\|\le \rho<1$. Therefore,
+The condition $|M_{ij}|<1$ indicates small initialization and as the question says that is as in Xavier-style initialization. For the analysis, we will assume this also implies a bound on the operator norm, $\|M^{(\ell)}\|\le \rho<1$. Therefore,
 $$
 \Big\|\delta^{(0)}\Big\|
 \le
 \rho^k \Big\|\delta^{(k)}\Big\|
 \xrightarrow[k\to\infty]{} 0,
 $$
-so the gradient magnitude decays (roughly) exponentially with depth.
+so the gradient magnitude decays exponentially with depth.
 
 For the residual form, let $\delta_2=\frac{\partial L}{\partial y_2}$. With
 $$

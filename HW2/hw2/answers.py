@@ -275,21 +275,44 @@ def part3_optim_hp():
 
 part3_q1 = r"""
 **Answer 1:**$\\$
-Optimization error is the error that results from failing to find the best possible parameters for a chosen model, even when
-the model is expressive enough to represent the true function. This means we can infer there are imperfections in the training 
-process rather than there are limitations in the model itself. This error can be caused by factors such as a poorly chosen 
-learning rate, too few training iterations, bad weight initialization, getting stuck in local minima or saddle points, or 
-noisy gradient updates.$\\$
+Optimization error is the error that comes from not finding the best possible parameters for a given model, 
+even when the model itself is powerful enough. This means the problem is in the training process and not in 
+the model structure. Optimization error can be caused by issues such as a bad learning rate, too few training 
+iterations, poor initialization, or the optimizer getting stuck in local minima or saddle points.$\\$
 
-Generalization error is the difference between the model's performance on the training data and its performance on unseen data. 
-A model may achieve very low training error but still perform poorly on new samples due to overfitting. This error is mainly 
-caused by having too complex a model relative to the amount of training data, insufficient regularization, biased or 
-non-representative training data, or data leakage from the test set.$\\$
+Generalization error is the difference between how well the model performs on the training data and how well 
+it performs on unseen data. A model can achieve low training error but still perform poorly on new samples due 
+to overfitting. This usually happens when the model is too complex compared to the amount of data, when there 
+is not enough regularization, or when the training data does not represent the test data well.$\\$
 
-Approximation error is the error that comes from the inherent limitations of the model's structure. If the model class is too 
-simple to represent the true underlying relationship in the data, the model will remain inaccurate even with perfect optimization 
-and infinite data. This error is caused by using an overly simple hypothesis class, such as a linear model to represent a highly 
-nonlinear problem, or by restricting the depth or width of a neural network too severely.$\\$
+Approximation error is the error that comes from the inherent limitations of the model's structure. If the model 
+class is too simple to represent the true underlying relationship in the data, the model will remain inaccurate 
+even with perfect optimization and infinite data. This error is caused by using an overly simple hypothesis 
+class, such as a linear model to represent a highly nonlinear problem, or by restricting the depth or width of 
+a neural network too severely.$\\$
+
+**Answer 2:**$\\$
+Optimization error:$\\$
+The optimization error is low. From the loss and accuracy curves, the training loss decreases rapidly
+and converges to a low value, while the training accuracy increases quickly and stabilizes around 
+93-94%. This indicates that the optimizer is able to find good parameters for the chosen model and 
+is not limited by poor convergence or training instability. The decision boundary also supports 
+this conclusion, as it is well-formed and clearly separates the training samples rather than 
+appearing random or poorly aligned with the data.$\\$
+
+Generalization error:$\\$
+The model shows a moderate generalization error, which is expected but still noticeable. There is a 
+consistent gap of about 8-12% between training and test accuracy, 
+and the test loss remains higher and more unstable than the training loss. From the decision boundary plot, we can see that while the boundary captures the overall 
+structure of the data, it also follows some fine details and bends tightly around certain regions. This suggests mild overfitting: the model learns the training data well, 
+but some of the learned structure does not transfer perfectly to unseen data.$\\$
+
+Approximation error:$\\$
+The approximation error is low. The decision boundary is clearly nonlinear and matches the general 
+shape of the class distributions, and the model achieves high training accuracy with low training loss.
+This shows that the hypothesis class is expressive enough to represent the underlying pattern in the 
+data. If approximation error were high, the boundary would be overly simple and unable to separate 
+the classes well even on the training set, which is not observed here.$\\$
 """
 
 part3_q2 = r"""
@@ -311,44 +334,77 @@ part3_q3 = r"""
 **Answer 1:**
 $\\$
 
-Depth = 1:
-When the depth is fixed to 1 and the width increases from 2 to 32, the decision boundary becomes slightly more flexible but 
-still remains fairly simple. This happens because the network can only create limited nonlinear transformations. with small width, 
-the model does not have enough capacity to fit the curve in the data, so the separation is almost linear and the accuracy is lower. 
-As the width increases, the model gains more capacity to represent different directions in the data, which allows the boundary to 
-bend a bit and improves both validation and test accuracy.
+Depth = 1:$\\$
+When the depth is fixed to 1 and the width increases from 2 to 32, the decision boundary becomes 
+slightly more flexible but still remains fairly simple. This happens because the network can only 
+create limited nonlinear transformations. with small width, the model does not have enough capacity 
+to fit the curve in the data, so the separation is almost linear and the accuracy is lower. 
+As the width increases, the model gains more capacity to represent different directions in 
+the data, which allows the boundary to bend a bit and improves both validation and test accuracy.$\\$
 
-Depth = 2:
-With depth equal to 2, increasing the width has a stronger effect because the model now combines features across two layers. 
-For small width, the model is still limited and cannot fully represent the curved structure of the classes, but as the width increases, 
-the model can form more combinations of features between layers, which makes the decision boundary more nonlinear and better 
-aligned with the data. as we can seein the validation and test accuracy which improve more clearly than in the depth 1 case.
+Depth = 2:$\\$
+With depth equal to 2, increasing the width has a stronger effect because the model now combines 
+features across two layers. For small width, the model is still limited and cannot fully represent 
+the curved structure of the classes, but as the width increases, the model can form more combinations 
+of features between layers, which makes the decision boundary more nonlinear and better aligned with 
+the data. as we can seein the validation and test accuracy which improve more clearly than in the depth
+1 case.$\\$
 
-Depth = 4 :
+Depth = 4 :$\\$
 At depth 4, as the width increases, the non linearity of the decision boundary grows very quickly, 
-and the decision boundary becomes extremely sharp and complex. This happens because many layers with many 
-neurons can represent very detailed variations in the data. As a result, the model fits the training and validation data very 
-well, which explains the very high validation accuracy. However, this high flexibility also makes the model sensitive to noise, 
-so the test accuracy does not always improve at the same rate, indicating an overfitting.
+and the decision boundary becomes extremely sharp and complex. This happens because many layers with 
+many neurons can represent very detailed variations in the data. As a result, the model fits the 
+training and validation data very well, which explains the very high validation accuracy. However, 
+this high flexibility also makes the model sensitive to noise, so the test accuracy does not always 
+improve at the same rate, indicating an overfitting.$\\$
 
 **Answer 2:**
 $\\$
-Width = 2:
-When the width is fixed to 2 and the depth increases, the model remains very narrow. Even though more layers are added, 
-each layer has very limited capacity to extract features. This restricts how much information can be passed forward through 
-the network. the decision boundary stays close to linear and cannot truly match  to the curved structure of the data. 
-As a result, increasing the depth alone does not significantly improve the validation and test accuracy.
+Width = 2:$\\$
+When the width is fixed to 2 and the depth increases, the model remains very narrow. Even though more 
+layers are added, each layer has very limited capacity to extract features. This restricts how much 
+information can be passed forward through the network. the decision boundary stays close to linear 
+and cannot truly match  to the curved structure of the data. As a result, increasing the depth alone 
+does not significantly improve the validation and test accuracy.$\\$
 
-Width = 8:
-With width equal to 8, the model has more neurons in each layer to learn meaningful features. When the depth increases, 
-these features can be transformed multiple times across layers, which allows the network to build more complex representations. 
-This is why the decision boundary becomes more curved and accurate, and why both validation and test accuracy improve.
+Width = 8:$\\$
+With width equal to 8, the model has more neurons in each layer to learn meaningful features. When 
+the depth increases, these features can be transformed multiple times across layers, which allows 
+the network to build more complex representations. This is why the decision boundary becomes more 
+curved and accurate, and why both validation and test accuracy improve.$\\$
 
-Width = 32
-When the width is already very large, increasing the depth gives the model extremely high capacity. Each layer can represent 
-many features, and stacking many such layers allows the network to fit very detailed patterns in the data. This explains why 
-the validation accuracy becomes very high. However the model can also learn the noise in 
-the dataset and be in overfitting, which is why the test accuracy does not increase in the same way and may even slightly decrease. 
+Width = 32:$\\$
+When the width is already very large, increasing the depth gives the model extremely high capacity. 
+Each layer can represent many features, and stacking many such layers allows the network to fit 
+very detailed patterns in the data. This explains why the validation accuracy becomes very high. 
+However the model can also learn the noise in the dataset and be in overfitting, which is why the 
+test accuracy does not increase in the same way and may even slightly decrease.$\\$
+
+**Answer 3:**
+$\\$
+Even though both configurations have approximately the same number of parameters, their behavior is 
+very different. The model with depth = 1 and width = 32 creates a smoother nonlinear boundary, 
+but the boundary mostly bends in a single direction. This means it can achieve reasonably good 
+performance, but it still cannot model the more complex structure present in the data. In contrast,
+the model with depth = 4 and width = 8 learns a more complex representation. Each layer transforms 
+the data further, allowing the decision boundary to capture more detailed nonlinear patterns. 
+This leads to higher validation and test accuracy. This comparison shows that, when the number of 
+parameters is similar, increasing depth is more effective than simply increasing width for learning 
+complex features.$\\$
+
+**Answer 4:**
+$\\$
+Yes, choosing the threshold on the validation set helped the test results. From the plots, we can see 
+that the best thresholds chosen on the validation set are not always 0.5. This means that using the 
+default threshold would classify too many points to one class. By adjusting the threshold using the 
+validation set, the decision boundary is shifted slightly, which leads to fewer classification 
+mistakes. In many configurations, this results in higher test accuracy compared to using a fixed 
+threshold. $\\$
+However, the improvement is limited. Threshold selection does not change the learned model or the 
+shape of the decision boundary, it only changes where we draw the final line between the classes. 
+Therefore, it can correct small biases in the predictions, but it cannot fix underfitting or 
+overfitting caused by the model architecture.$\\$
+
 """
 
 # ==============
@@ -373,13 +429,186 @@ def part4_optim_hp():
 
 
 part4_q1 = r"""
-**Your answer:**
+**Answer 1:**$\\$
+
+Regular block:$\\$
+The regular block has two $3\times 3$ convolutional layers that operate directly on a 256-channel 
+input. which mean that each convolution have:
+
+$$
+3 \times 3 \times 256 \times 256 + 256(bias)
+= 590,080 \hspace{0.1cm} \text{parameters}
+$$
+
+Since there are two layers, the total number of parameters is
+$$
+2 \times 590{,}080 = 1{,}180{,}160 \hspace{0.1cm} \text{parameters}
+$$
+
+Bottleneck block:$\\$
+The bottleneck block consists of three convolutions:
+
+First layer: $1\times 1$ conv, $256 \to 64$: $\\$
+$$
+1 \times 1 \times 256 \times 64 + 64 = 16,448 \hspace{0.1cm} \text{parameters}
+$$ $\\$
+
+Second layer: $3\times 3$ conv, $64 \to 64$: $\\$
+$$
+3 \times 3 \times 64 \times 64 + 64 = 36,928 \hspace{0.1cm} \text{parameters}
+$$ $\\$
+
+Third layer: $1\times 1$ conv, $64 \to 256$: $\\$
+$$
+1 \times 1 \times 64 \times 256 + 256 = 16,640 \hspace{0.1cm} \text{parameters}
+$$
+
+
+Therefore total number of parameters in the bottleneck block is therefore
+$$
+16,448 + 36,928 + 16,640 = 70,016 \hspace{0.1cm} \text{parameters}
+$$
+
+**Answer 2:**
+
+The number of floating point operations can be approximately calculated like this:$\\$
+
+For the regular block:
+There are two $3\times 3$ convolutions with $C_{\text{in}} = C_{\text{out}} = 256$, so
+$$ 
+ 2 \times H  \times W \hspace{0.1cm} \text{(spatial input size)} \times 3 \times 3 \hspace{0.1cm} \text{(conv kernal size)} 
+ \times 256 \hspace{0.1cm} \text{(input channels)} \times 256 \hspace{0.1cm} \text{(output channels)}
+= H \times W \times 1{,}179{,}648.
+$$
+
+
+For the bottleneck block:
+$$
+\begin{aligned}
+\text{First layer:}\quad & H \times W \hspace{0.1cm} \text{(spatial input size)} \times 1 \times 1 \hspace{0.1cm} \text{(conv kernal size)} 
+ \times 256 \hspace{0.1cm} \text{(input channels)} \times 64 \hspace{0.1cm} \text{(output channels)}\\
+\text{Second layer:}\quad & H \times W \hspace{0.1cm} \text{(spatial input size)} \times 3 \times 3 \hspace{0.1cm} \text{(conv kernal size)} 
+ \times 64 \hspace{0.1cm} \text{(input channels)} \times 64 \hspace{0.1cm} \text{(output channels)},\\
+\text{Third layer:}\quad & H \times W \hspace{0.1cm} \text{(spatial input size)} \times 1 \times 1 \hspace{0.1cm} \text{(conv kernal size)}
+ \times 64 \hspace{0.1cm} \text{(input channels)} \times 256 \hspace{0.1cm} \text{(output channels)}.
+\end{aligned}
+$$
+
+Suming these, the total Flops are
+$$
+= H \times W \times 69,632.
+$$
+
+
+**Answer 3:**$\\$
+
+Both blocks combine information spatially and across feature maps, but they do so in different
+ways.$\\$
+
+In the regular block, both $3\times 3$ convolutions operate on the full 256-channel representation. 
+Stacking these two layers yields an effective receptive field of $5\times 5$, enabling extensive 
+spatial aggregation within each feature map. Because all 256 channels are preserved throughout the 
+block, spatial interactions are modeled in a high-dimensional space, allowing the block to capture 
+fine spatial structures. This increased representational capacity however comes at a high 
+computational and parameter cost.$\\$
+
+In the bottleneck block, by contrast, there is only a single $3\times 3$ convolution responsible 
+for spatial aggregation, and it operates on a reduced 64-dimensional channel space. Although the 
+effective receptive field remains $5\times 5$, spatial mixing occurs in a lower-dimensional 
+representation, making it less expressive spatially than the regular block but significantly 
+more efficient.$\\$
+
+The bottleneck block compensates for this by using $1\times 1$ convolutions to compress and 
+then re-expand the channel dimension (from 256 to 64 and back to 256). These $1\times 1$ layers 
+enable efficient mixing across feature maps, allowing the network to reweight, select, and recombine
+channels while suppressing redundant features. The regular block lacks this explicit channel 
+compression and expansion mechanism, as both of its layers are purely spatial convolutions operating 
+on the full 256-channel space.$\\$
+
+to summrize this the regular block is better at spatially combining information within feature maps, 
+while the bottleneck block is more effective at combining information across feature maps as a 
+result of $1\times 1$ convolutions.$\\$
 
 """
 
 
 part4_q2 = r"""
-**Your answer:**
+**Your answer:**$\\$
+
+Let $\delta_1=\frac{\partial L}{\partial y_1}\in\mathbb{R}^m$. For $y_1=Mx_1$, the Jacobian is
+$\frac{\partial y_1}{\partial x_1}=M$, hence by the chain rule
+$$
+\frac{\partial L}{\partial x_1}
+=\left(\frac{\partial y_1}{\partial x_1}\right)^\top \frac{\partial L}{\partial y_1}
+= M^\top \delta_1.
+$$
+
+Now let us look at $k$ such layers. Because in a stacked network, the output of layer $\ell$ becomes 
+the input to layer $\ell+1$, we will denote the representation after layer $\ell$ by $x^{(\ell)}$ 
+and define
+$$
+x^{(\ell+1)} = M^{(\ell)} x^{(\ell)}, \qquad \ell=0,1,\dots,k-1.
+$$
+The loss $L$ depends on the final output $x^{(k)}$, so gradients are passed backward through each 
+layer.$\\$
+
+Let $\delta^{(\ell)} := \frac{\partial L}{\partial x^{(\ell)}}$.
+For the last layer,
+$$
+\delta^{(k-1)} = \frac{\partial L}{\partial x^{(k-1)}}
+= \left(\frac{\partial x^{(k)}}{\partial x^{(k-1)}}\right)^\top \frac{\partial L}{\partial x^{(k)}}
+= \left(M^{(k-1)}\right)^\top \delta^{(k)}.
+$$
+For one step earlier,
+$$
+\delta^{(k-2)}
+= \left(\frac{\partial x^{(k-1)}}{\partial x^{(k-2)}}\right)^\top \delta^{(k-1)}
+= \left(M^{(k-2)}\right)^\top \left(M^{(k-1)}\right)^\top \delta^{(k)}.
+$$
+
+Continuing this substitution, each time you move one layer backward you multiply by the transpose 
+of that layer's matrix. After $k$ steps you obtain
+$$
+\frac{\partial L}{\partial x^{(0)}}
+= \delta^{(0)}
+= \left(M^{(0)}\right)^\top \left(M^{(1)}\right)^\top \cdots \left(M^{(k-1)}\right)^\top \, \delta^{(k)}
+= \Big(\prod_{\ell=0}^{k-1}\left(M^{(\ell)}\right)^\top\Big)\frac{\partial L}{\partial x^{(k)}}.
+$$
+
+We now use the inequality $\|AB\|\le \|A\|\,\|B\|$:
+$$
+\Big\|\frac{\partial L}{\partial x^{(0)}}\Big\|
+\le
+\Big(\prod_{\ell=0}^{k-1}\big\|\left(M^{(\ell)}\right)^\top\big\|\Big)\Big\|\frac{\partial L}{\partial x^{(k)}}\Big\|
+=
+\Big(\prod_{\ell=0}^{k-1}\|M^{(\ell)}\|\Big)\Big\|\frac{\partial L}{\partial x^{(k)}}\Big\|.
+$$
+
+The condition $|M_{ij}|<1$ indicates small initialization and as the question says that is as in 
+Xavier-style initialization. For the analysis, we will assume this also implies a bound on the 
+operator norm, $\|M^{(\ell)}\|\le \rho<1$. Therefore,
+$$
+\Big\|\delta^{(0)}\Big\|
+\le
+\rho^k \Big\|\delta^{(k)}\Big\|
+\xrightarrow[k\to\infty]{} 0,
+$$
+so the gradient magnitude decays exponentially with depth.
+
+For the residual form, let $\delta_2=\frac{\partial L}{\partial y_2}$. With
+$$
+y_2 = x_2 + M x_2 = (I+M)x_2,
+$$
+the Jacobian is $\frac{\partial y_2}{\partial x_2}=I+M$, hence
+$$
+\frac{\partial L}{\partial x_2} = (I+M)^\top \delta_2 = \delta_2 + M^\top \delta_2.
+$$
+
+The term $\delta_2$ comes from the skip connection and passes backward unchanged, while 
+$M^\top\delta_2$ is the additional part contributed by the weights. In a stack 
+$x^{(\ell+1)}=(I+M^{(\ell)})x^{(\ell)}$, the backward gradient is multiplied by 
+$(I+M^{(\ell)})^\top$ at each layer when $\|M^{(\ell)}\|$ is small, these matrices are close 
+to $I$, so the gradient is not forced to shrink like a product of $M^{(\ell)\top}$ terms.$\\$
 
 """
 
@@ -390,25 +619,138 @@ part4_q2 = r"""
 
 
 part5_q1 = r"""
-**Your answer:**
+**Answer 1:**$\\$
+
+The results show a clear non-monotonic relationship between network depth and accuracy.
+For both K=32 and K=64, the shallower networks (L=2 and L=4) train successfully and achieve 
+reasonable accuracy, while very deep networks (L=8,16) completely fail to train.$\\$
+
+However, for K=32 and K=64 the test accuracy completly collapses to ~10% 
+(random guessing for 10-class CIFAR-10) at L=8 and L=16 and for K=32 peaks at L=2 with 61.7%, 
+then drops slightly to 57.7% at L=4, whereas for K=64 the optimal depth is L=4 with 67.6% test
+accuracy.$\\$
+
+This means that the best results are achieved at moderate depths: L=2 for K=32 and L=4 for K=64.
+This makes sense because these networks are deep enough to extract hierarchical features but 
+shallow enough to avoid optimization problems. The deeper network (L=4) works better 
+with more filters (K=64) because the additional representational capacity helps compensate 
+for the increased depth.$\\$
+
+**Answer 2:**$\\$
+
+Yes, the networks with L=8 and L=16 were completely untrainable. Both networks achieved only
+~10% test accuracy, which is equal to random guessing on the 10-class CIFAR-10 dataset.
+The loss remained stuck at approximately 2.303 (which is -ln(1/10), the loss for uniform 
+random predictions) throughout training, and training was terminated early due to no improvement.$\\$
+
+This failure is caused by the vanishing gradient. In very deep networks without skip 
+connections, gradients must be backpropagated through many layers. Since each layer applies 
+an activation function (ReLU) and potentially pooling, the gradients get multiplied by many 
+values less than 1 during backpropagation. By the time gradients reach the early layers, 
+they become extremely small (vanish), making it impossible for those layers to learn 
+meaningful features. Without proper features in early layers, the entire network cannot learn.
+We can solve this in 2 ways.$\\$
+
+1. Use residual or skip connections in a ResNet-style architecture. These connections
+let gradients pass through the network more directly, instead of being repeatedly 
+transformed by activation functions. This creates clear gradient pathways that make 
+training much deeper models feasible and help mitigate the vanishing gradient problem.$\\$
+
+2. Add batch normalization layers after each convolution to keep activations well behaved and 
+training stable. By normalizing activations, the network avoids extreme values, which helps 
+gradients stay informative as they propagate through the layers and makes deeper models easier 
+to train.$\\$
 
 """
 
 part5_q2 = r"""
-**Your answer:**
+**Answer:**$\\$
+
+The results show that changing the number of filters does not have a simple or uniform effect
+on performance. Compared to the earlier experiment that focused on depth, this makes it clear 
+that model capacity is not just about adding more layers or more filters. The interaction 
+between depth and width matters.$\\$
+
+For shallow networks with L=2, increasing the number of filters hurts performance. 
+This suggests that when the network is too shallow, adding parameters does not help it learn 
+better and may even make optimization or generalization harder.$\\$
+
+When L=4, the expected behavior appears. As the number of filters increases, performance 
+improves. At this depth, the network can take advantage of the extra capacity and learn more
+complicated features.$\\$
+
+When the network becomes deeper, that means when L=8, all configurations fail regardless 
+of how many filters are used. Performance becoms similar to random guessing, showing that 
+training breaks down completely. In this case, the vanishing gradient problem causes the model
+to not learn at all, and increasing width cannot compensate.$\\$
+
+Taken together, the experiments show that making a network very deep does not work, even if it 
+is very wide. Depth and width work best when they are balanced. Networks with moderate depth 
+can benefit from more filters, while shallow networks cannot. Overall, good performance 
+comes from a balanced design rather than pushing depth or width to extremes.$\\$
 
 """
 
 part5_q3 = r"""
-**Your answer:**
+**Answer:**$\\$
+
+In this experiment,the later layers have more filters than the earlier ones. 
+even though the networks themselves are not very deep.
+The idea is to let earlier layers focus on simpler features and later 
+layers handle more complex ones, which is a common CNN design choice.$\\$
+
+With two and three layers, this approach works well and gives better results 
+than using the same number of filters in every layer. Increasing the filters 
+in the later layers helps the model use its capacity more effectively, even at 
+small depths.$\\$
+
+However, the limitation is still clear. When the network reaches four layers, 
+training fails despite the new filter sizes. This shows that increasing filters 
+across layers helps at small depths, but it cannot overcome training issues caused 
+by adding more layers. Depth remains the main bottleneck without skip connections.$\\$
 
 """
 
 part5_q4 = r"""
-**Your answer:**
+**Answer:**$\\$
+
+This experiment shows that skip connections make a major difference when training deeper networks.
+With ResNet, networks with eight or sixteen layers are able to train successfully, whereas in 
+experiment 1.1 models at these depths failed due to training breakdown and vanishing gradiants.$\\$
+
+Compared to experiment 1.3, the improvement is still clear, though not as big.
+In experiment 1.4, networks with two, four, and eight layers all train better than before, 
+benefiting from both skip connections and the use of more filters. While experiment 1.3 already 
+showed that additional filters can work well at low depth, adding skip connections allows 
+the model to train more reliably and extract better features, thus improving results.$\\$
+
+Overall, the biggest gain is seen when depth increases. Skip connections turn depth from a 
+limitation/hindernce into an advantage/improvment, making deeper networks trainable and 
+improving performance across all tested depths.$\\$
 
 """
+part5_q5 = r"""
+**Answer:**$\\$
 
+YourCNN adds skip connections to help train deeper networks. Every P=8 layers are grouped
+with a skip connection that lets data jump ahead. This helps gradients flow backward during training.
+We also use batch normalization, dropout (p=0.2), K=[32, 64, 128] filters, and early stopping=6.$\\$
+
+Results comparing old CNN vs YourCNN with skip connections:$\\$
+
+- L=3: 68.4% vs 71.8% (skip connections slightly worse)
+- L=6: 69.7% vs 66.0% (skip connections better)
+- L=9: 72.7% vs 63.9% (skip connections much better)
+- L=12: 69.3% vs 31.5% (old CNN failed completely due to vanishing gradients)
+
+At L=3, skip connections don't help because the network is shallow enough to train anyway.
+At L=6 and L=9, skip connections start improving results. At L=12, the difference is huge -
+the old CNN suffered from vanishing gradients and barely learned anything while YourCNN
+with skip connections still trains well.$\\$
+
+Best accuracy: 72.7% at L=9. Skip connections make it possible to train deep networks.$\\$
+
+"""
 
 # ==============
 

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m hw2.experiments run-exp:*)",
+      "Bash(nvidia-smi:*)",
+      "Bash(wmic process:*)"
+    ]
+  }
+}

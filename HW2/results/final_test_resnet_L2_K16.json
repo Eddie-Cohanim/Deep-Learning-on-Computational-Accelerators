@@ -1,0 +1,45 @@
+{
+  "config": {
+    "run_name": "final_test_resnet",
+    "out_dir": "./results",
+    "seed": 42,
+    "device": null,
+    "bs_train": 50,
+    "bs_test": 12,
+    "batches": 2,
+    "epochs": 2,
+    "early_stopping": 5,
+    "checkpoints": null,
+    "lr": 0.001,
+    "reg": 0.001,
+    "filters_per_layer": [
+      16
+    ],
+    "layers_per_block": 2,
+    "pool_every": 2,
+    "hidden_dims": [
+      64
+    ],
+    "model_type": "resnet",
+    "kw": {}
+  },
+  "results": {
+    "num_epochs": 2,
+    "train_loss": [
+      2.2865062952041626,
+      2.325735569000244
+    ],
+    "train_acc": [
+      11.0,
+      8.0
+    ],
+    "test_loss": [
+      2.2498128414154053,
+      2.2139298915863037
+    ],
+    "test_acc": [
+      16.666666666666668,
+      20.833333333333332
+    ]
+  }
+}

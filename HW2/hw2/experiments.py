@@ -49,16 +49,12 @@ def mlp_experiment(
     x0, _ = next(iter(dl_train))
     in_dim = x0.shape[1]
 
-    # dims: hidden layers + 2-class output
     dims = [width] * depth + [2]
 
-    # IMPORTANT: use activation *names* so MLP can look them up in ACTIVATIONS.
-    # As Thanh suggested: use tanh-based non-linearities.
     nonlins = [torch.nn.Tanh()] * depth + [torch.nn.Identity()]
     core_model = MLP(in_dim=in_dim, dims=dims, nonlins=nonlins)
     model = BinaryClassifier(core_model, positive_class=1, threshold=0.5)
 
-    # Keep everything on CPU so select_roc_thresh can call .numpy() safely
     device = torch.device("cpu")
     model.to(device)
 
@@ -175,25 +171,19 @@ def cnn_experiment(
     #   for you automatically.
     fit_res = None
     # ====== YOUR CODE: ======
-    # Expand filters_per_layer to channels based on layers_per_block
-    # e.g., if filters_per_layer=[64, 128] and layers_per_block=2
-    # then channels = [64, 64, 128, 128]
     channels = []
     for f in filters_per_layer:
         channels.extend([f] * layers_per_block)
 
-    # Create data loaders
     dl_train = DataLoader(ds_train, batch_size=bs_train, shuffle=True)
     dl_test = DataLoader(ds_test, batch_size=bs_test, shuffle=False)
 
-    # Get input size from first sample
     sample_image, _ = ds_train[0]
-    in_size = sample_image.shape  # Should be (C, H, W)
+    in_size = sample_image.shape
 
-    # Create core model using the specified model class
     core_model = model_cls(
         in_size=in_size,
-        out_classes=10,  # CIFAR-10 has 10 classes
+        out_classes=10,  
         channels=channels,
         pool_every=pool_every,
         hidden_dims=hidden_dims,
@@ -201,17 +191,13 @@ def cnn_experiment(
         pooling_params=dict(kernel_size=2),
     )
 
-    # Wrap the core model in ArgMaxClassifier for multi-class classification
     model = ArgMaxClassifier(core_model)
     model = model.to(device)
 
-    # Create loss function
     loss_fn = torch.nn.CrossEntropyLoss()
 
-    # Create optimizer with weight decay for L2 regularization
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
 
-    # Create trainer
     trainer = ClassifierTrainer(
         model=model,
         loss_fn=loss_fn,
@@ -219,7 +205,6 @@ def cnn_experiment(
         device=device,
     )
 
-    # Train the model
     fit_res = trainer.fit(
         dl_train=dl_train,
         dl_test=dl_test,
@@ -236,11 +221,7 @@ def cnn_experiment(
 def save_experiment(run_name, out_dir, cfg, fit_res):
     output = dict(config=cfg, results=fit_res._asdict())
 
-    cfg_LK = (
-        f'L{cfg["layers_per_block"]}_K'
-        f'{"-".join(map(str, cfg["filters_per_layer"]))}'
-    )
-    output_filename = f"{os.path.join(out_dir, run_name)}_{cfg_LK}.json"
+    output_filename = f"{os.path.join(out_dir, run_name)}.json"
     os.makedirs(out_dir, exist_ok=True)
     with open(output_filename, "w") as f:
         json.dump(output, f, indent=2)

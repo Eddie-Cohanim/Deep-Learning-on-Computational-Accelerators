@@ -91,7 +91,6 @@ class Trainer(abc.ABC):
             train_acc.append(train_result.accuracy)
             test_loss.append(ep_test_loss)
             test_acc.append(test_result.accuracy)
-            actual_num_epochs += 1
             # ========================
 
             # TODO:
@@ -163,22 +162,7 @@ class Trainer(abc.ABC):
         :return: A BatchResult containing the value of the loss function and
             the number of correctly classified samples in the batch.
         """
-        X, y = batch
-        if self.device is not None:
-            X = X.to(self.device)
-            y = y.to(self.device)
-
-        scores = self.model(X)
-        loss = self.loss_fn(scores, y)
-        
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-  
-        y_hat = self.model._classify(scores)  
-        num_correct = (y_hat == y).sum().item()
-
-        return BatchResult(loss.item(), num_correct)
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def test_batch(self, batch) -> BatchResult:
@@ -190,19 +174,7 @@ class Trainer(abc.ABC):
         :return: A BatchResult containing the value of the loss function and
             the number of correctly classified samples in the batch.
         """
-        X, y = batch
-        if self.device is not None:
-            X = X.to(self.device)
-            y = y.to(self.device)
-
-        with torch.no_grad():
-            scores = self.model(X)
-            loss = self.loss_fn(scores, y)
-
-            y_hat = self.model._classify(scores)
-            num_correct = (y_hat == y).sum().item()
-
-        return BatchResult(loss.item(), num_correct)
+        raise NotImplementedError()
 
     @staticmethod
     def _print(message, verbose=True):
@@ -386,3 +358,4 @@ class LayerTrainer(Trainer):
         # ========================
 
         return BatchResult(loss, num_correct)
+

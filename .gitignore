@@ -1,6 +1,7 @@
 data/
 checkpoints/
 **/results/monitor/
+CLAUDE.md
 
 # Created by https://www.gitignore.io/api/python,pycharm,windows,osx,linux
 

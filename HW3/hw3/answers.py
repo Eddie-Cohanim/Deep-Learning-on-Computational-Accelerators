@@ -80,19 +80,58 @@ def part2_vae_hyperparams():
 
 
 part2_q1 = r"""
-**Your answer:**
+**Answer:**$\\$
+The $\sigma^2$ hyperparameter (x_sigma2) represents the variance of the Gaussian likelihood distribution $p_{\beta}(\mathbf{X} | \mathbf{Z})$. 
+It controls the reconstruction term in the VAE loss.$\\$
+
+When $\sigma^2$ is small, the reconstruction error is weighted much more heavily, so the model prioritizes matching the input closely. 
+This can reduce the influence of the KL term, which may cause overfitting and a less regular, less smooth latent space.$\\$
+
+When  $\sigma^2$ is large, reconstruction errors are penalized less, so the KL term has more influence. This typically produces a 
+more regular latent space, but reconstructions can become blurrier or less accurate, and samples may be more diverse but lower quality.$\\$
+
 """
 
 part2_q2 = r"""
-**Your answer:**
+**Answer 1:**$\\$
+Reconstruction loss checks how close the output is to the input. Its job is to make sure the latent code keeps enough 
+information so the decoder can rebuild the image well. If this term is doing its job, reconstructed images look similar
+to the originals, and details that matter for the data should be preserved. Without this term, the model would have no 
+strong reason to produce accurate reconstructions.$\\$
+
+KL divergence loss is a regularizer on the latent space. It prevents the encoder from using the latent variables 
+in an arbitrary way that only works for the training set thereby overfitting it. It pushes the encoder's latent distributions to stay close 
+to a simple prior distribution (usually a standard normal).$\\$
+
+**Answer 2:**$\\$
+The KL term encourages the encoder to produce latent codes that look like they were sampled from the prior distribution, 
+instead of being scattered unpredictably. In practice, it pulls the latent means toward zero and discourages the variances from becoming extreme.
+This means the KL term creates pressure for a more consistent and shared structure across all examples, rather than every input having its own isolated 
+latent region.$\\$
+
+**Answer 3:**$\\$
+It makes the mode learn a smoother, more continuous representation where small changes in the latent code lead to small, 
+gradual changes in the output. It also reduces overfitting by preventing the model from memorizing the training examples, which helps it generalize 
+better to new, unseen inputs.$\\$
 """
 
 part2_q3 = r"""
-**Your answer:**
+**Answer:**$\\$
+We start from the evidence $p(X)$ (equivalently $\log p(X)$) because we want the model to assign high probability to the observed data so 
+it can later generate similar samples. However, directly optimizing $\log p(X)$ is not computationally feasible. Therefore, we maximize a
+lower bound on $\log p(X)$. We aim to make this bound as tight as possible (i.e., as close to $\log p(X)$ as we can),
+because a tighter bound yields a more accurate fit to the data distribution and improves the quality of the generated samples.$\\$
+
 """
 
 part2_q4 = r"""
-**Your answer:**
+**Answer:**$\\$
+We model the log-variance of the latent space rather than the variance itself mainly for stability and convenience during training: 
+variance must be strictly positive, but a neural network can output any real number, so predicting variance directly would 
+require extra constraints or special handling that can be numerically unstable, especially when values get very small or very large. 
+By predicting log-variance instead, the network can output any real value and we convert it to a valid positive variance. This also makes the KL 
+divergence term easier and more stable to compute, since the KL formula already includes a log-variance component, so having it directly avoids 
+additional log operations.$\\$
 """
 
 

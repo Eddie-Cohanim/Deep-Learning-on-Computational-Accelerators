@@ -94,19 +94,16 @@ class Trainer(abc.ABC):
             #  - Implement early stopping. This is a very useful and
             #    simple regularization technique that is highly recommended.
             # ====== YOUR CODE: ======
-            # Train for one epoch
             train_result = self.train_epoch(dl_train, verbose=verbose, **kw)
             train_loss.append(sum(train_result.losses) / len(train_result.losses))
             train_acc.append(train_result.accuracy)
 
-            # Evaluate on test set
             test_result = self.test_epoch(dl_test, verbose=verbose, **kw)
             test_loss.append(sum(test_result.losses) / len(test_result.losses))
             test_acc.append(test_result.accuracy)
 
             actual_num_epochs += 1
 
-            # Early stopping and checkpoint logic
             if best_acc is None or test_result.accuracy > best_acc:
                 best_acc = test_result.accuracy
                 epochs_without_improvement = 0
@@ -114,7 +111,6 @@ class Trainer(abc.ABC):
             else:
                 epochs_without_improvement += 1
 
-            # Check early stopping condition
             if early_stopping is not None and epochs_without_improvement >= early_stopping:
                 self._print(
                     f"Early stopping after {epochs_without_improvement} epochs without improvement",
@@ -306,17 +302,9 @@ class VAETrainer(Trainer):
         # TODO: Train a VAE on one batch.
         # ====== YOUR CODE: ======
         self.optimizer.zero_grad()
-
-        # Forward pass
-        xr, z_mu, z_log_sigma2 = self.model(x)
-
-        # Compute loss
-        loss, data_loss, kldiv_loss = self.loss_fn(x, xr, z_mu, z_log_sigma2)
-
-        # Backward pass
+        reconstructed, z_mu, z_log_sigma2 = self.model(x)
+        loss, data_loss, kldiv_loss = self.loss_fn(x, reconstructed, z_mu, z_log_sigma2)
         loss.backward()
-
-        # Update parameters
         self.optimizer.step()
         # ========================
 
@@ -329,11 +317,8 @@ class VAETrainer(Trainer):
         with torch.no_grad():
             # TODO: Evaluate a VAE on one batch.
             # ====== YOUR CODE: ======
-            # Forward pass
-            xr, z_mu, z_log_sigma2 = self.model(x)
-
-            # Compute loss
-            loss, data_loss, kldiv_loss = self.loss_fn(x, xr, z_mu, z_log_sigma2)
+            reconstructed, z_mu, z_log_sigma2 = self.model(x)
+            loss, data_loss, kldiv_loss = self.loss_fn(x, reconstructed, z_mu, z_log_sigma2)
             # ========================
 
         return BatchResult(loss.item(), 1 / data_loss.item())

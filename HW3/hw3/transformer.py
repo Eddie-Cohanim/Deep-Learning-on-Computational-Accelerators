@@ -26,46 +26,45 @@ def sliding_window_attention(q, k, v, window_size, padding_mask=None):
     values, attention = None, None
 
     # ====== YOUR CODE: ======
-    # Compute scaled dot product: Q * K^T / sqrt(d_k)
-    d_k = embed_dim
-    scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(d_k)  # [Batch, (num_heads), SeqLen, SeqLen]
+    assert window_size % 2 == 0, "Window size must be an even number"
+    device = q.device
+    half_window_size = window_size / 2
+    out_mat_dims  = (seq_len, seq_len)
+    B = torch.zeros(out_mat_dims).to(device)
+    offset = torch.arange(seq_len).unsqueeze(1) - torch.arange(seq_len).unsqueeze(0)
+    offset = offset.to(device)
 
-    # Create sliding window mask
-    # For each query position i, we only attend to keys within window_size/2 distance
-    half_window = window_size // 2
-    mask = torch.ones_like(scores) * float('-inf')
+    B[(offset < -half_window_size) | (offset > half_window_size)] = float('-inf')
 
-    for i in range(seq_len):
-        start = max(0, i - half_window)
-        end = min(seq_len, i + half_window + 1)
-        if scores.dim() == 4:  # Multi-head case
-            mask[:, :, i, start:end] = 0
-        else:  # Single head case
-            mask[:, i, start:end] = 0
+    if k.dim() == 4:
+        B = B.repeat(batch_size, k.shape[1], 1, 1)
+        b_idxs, h_idxs, r_idxs, c_idxs = torch.where(B == 0)
+        temp = (q[b_idxs, h_idxs, r_idxs, :] * k[b_idxs, h_idxs, c_idxs, :])
+        B[b_idxs, h_idxs, r_idxs, c_idxs] = temp.sum(dim=-1)
+        B /= math.sqrt(embed_dim)
+    else:
+        B = B.repeat(batch_size, 1, 1)
+        b_idxs, r_idxs, c_idxs = torch.where(B == 0)
+        temp = (q[b_idxs, r_idxs, :] * k[b_idxs, c_idxs, :])
+        B[b_idxs, r_idxs, c_idxs] = temp.sum(dim=-1)
+        B /= math.sqrt(embed_dim)
 
-    # Apply sliding window mask
-    scores = scores + mask
-
-    # Apply padding mask if provided
     if padding_mask is not None:
-        # Expand padding mask to match scores dimensions
-        if scores.dim() == 4:  # Multi-head: [Batch, num_heads, SeqLen, SeqLen]
-            padding_mask = padding_mask.unsqueeze(1).unsqueeze(2)  # [Batch, 1, 1, SeqLen]
-        else:  # Single head: [Batch, SeqLen, SeqLen]
-            padding_mask = padding_mask.unsqueeze(1)  # [Batch, 1, SeqLen]
+        padding_mask = padding_mask.to(dtype=bool)
+        padding_mask = ~padding_mask
+        if q.dim() == 4:
+            padding_mask = (padding_mask[:, None, None, :] | padding_mask[:, None, :, None])
+        else:
+            padding_mask = (padding_mask[:, None, :] | padding_mask[:, :, None])
 
-        # Set padded positions to -inf
-        scores = scores.masked_fill(padding_mask == 0, float('-inf'))
+        B = B.masked_fill(padding_mask, float('-inf'))
 
-    # Apply softmax to get attention weights
-    attention = torch.softmax(scores, dim=-1)
 
-    # Handle NaN values that might occur from softmax of all -inf
-    attention = torch.nan_to_num(attention, 0.0)
-
-    # Compute weighted sum of values
+    attention = torch.softmax(B, dim=-1)
+    attention = attention.masked_fill(torch.isnan(attention), 0.0)
     values = torch.matmul(attention, v)
-    # ======================
+
+    # ========================
 
     return values, attention
 
@@ -84,7 +83,7 @@ class MultiHeadAttention(nn.Module):
         # "bias=False" is optional, but for the projection we learned, there is no teoretical justification to use bias
         self.qkv_proj = nn.Linear(input_dim, 3*embed_dim)
         self.o_proj = nn.Linear(embed_dim, embed_dim)
-        
+
         self._reset_parameters()
 
     def _reset_parameters(self):
@@ -184,13 +183,13 @@ class EncoderLayer(nn.Module):
         '''
 
         # ====== YOUR CODE: ======
-        # Multi-head attention with residual connection and layer norm
-        attn_output = self.self_attn(x, padding_mask)
-        x = self.norm1(x + self.dropout(attn_output))
+        attn_output = self.self_attn(x= x, padding_mask = padding_mask,return_attention = False)
+        attn_output = self.dropout(attn_output)
+        x = self.norm1(x + attn_output)
 
-        # Feed-forward network with residual connection and layer norm
         ff_output = self.feed_forward(x)
-        x = self.norm2(x + self.dropout(ff_output))
+        ff_output = self.dropout(ff_output)
+        x = self.norm2( x + ff_output)
         # ========================
 
         return x
@@ -232,24 +231,11 @@ class Encoder(nn.Module):
         output = None
 
         # ====== YOUR CODE: ======
-        # Embed the input tokens
-        x = self.encoder_embedding(sentence)  # [Batch, SeqLen, EmbedDim]
-
-        # Add positional encoding
-        x = self.positional_encoding(x)
-
-        # Apply dropout
-        x = self.dropout(x)
-
-        # Pass through encoder layers
+        positional_encoding = self.positional_encoding(self.encoder_embedding(sentence))
+        output = self.dropout(positional_encoding)
         for layer in self.encoder_layers:
-            x = layer(x, padding_mask)
-
-        # Extract the [CLS] token representation (first token)
-        cls_token = x[:, 0, :]  # [Batch, EmbedDim]
-
-        # Apply classification MLP
-        output = self.classification_mlp(cls_token).squeeze(-1)  # [Batch]
+            output = layer(output, padding_mask)
+        output = self.classification_mlp(output[:, 0])
         # ========================
 
 

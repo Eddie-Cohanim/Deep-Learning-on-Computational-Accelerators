@@ -26,7 +26,45 @@ def sliding_window_attention(q, k, v, window_size, padding_mask=None):
     values, attention = None, None
 
     # ====== YOUR CODE: ======
-    pass
+    # Compute scaled dot product: Q * K^T / sqrt(d_k)
+    d_k = embed_dim
+    scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(d_k)  # [Batch, (num_heads), SeqLen, SeqLen]
+
+    # Create sliding window mask
+    # For each query position i, we only attend to keys within window_size/2 distance
+    half_window = window_size // 2
+    mask = torch.ones_like(scores) * float('-inf')
+
+    for i in range(seq_len):
+        start = max(0, i - half_window)
+        end = min(seq_len, i + half_window + 1)
+        if scores.dim() == 4:  # Multi-head case
+            mask[:, :, i, start:end] = 0
+        else:  # Single head case
+            mask[:, i, start:end] = 0
+
+    # Apply sliding window mask
+    scores = scores + mask
+
+    # Apply padding mask if provided
+    if padding_mask is not None:
+        # Expand padding mask to match scores dimensions
+        if scores.dim() == 4:  # Multi-head: [Batch, num_heads, SeqLen, SeqLen]
+            padding_mask = padding_mask.unsqueeze(1).unsqueeze(2)  # [Batch, 1, 1, SeqLen]
+        else:  # Single head: [Batch, SeqLen, SeqLen]
+            padding_mask = padding_mask.unsqueeze(1)  # [Batch, 1, SeqLen]
+
+        # Set padded positions to -inf
+        scores = scores.masked_fill(padding_mask == 0, float('-inf'))
+
+    # Apply softmax to get attention weights
+    attention = torch.softmax(scores, dim=-1)
+
+    # Handle NaN values that might occur from softmax of all -inf
+    attention = torch.nan_to_num(attention, 0.0)
+
+    # Compute weighted sum of values
+    values = torch.matmul(attention, v)
     # ======================
 
     return values, attention
@@ -69,7 +107,7 @@ class MultiHeadAttention(nn.Module):
         # Determine value outputs
         # call the sliding window attention function you implemented
         # ====== YOUR CODE: ======
-        pass
+        values, attention = sliding_window_attention(q, k, v, self.window_size, padding_mask)
         # ========================
 
         values = values.permute(0, 2, 1, 3) # [Batch, SeqLen, Head, Dims]
@@ -146,9 +184,15 @@ class EncoderLayer(nn.Module):
         '''
 
         # ====== YOUR CODE: ======
-        pass
+        # Multi-head attention with residual connection and layer norm
+        attn_output = self.self_attn(x, padding_mask)
+        x = self.norm1(x + self.dropout(attn_output))
+
+        # Feed-forward network with residual connection and layer norm
+        ff_output = self.feed_forward(x)
+        x = self.norm2(x + self.dropout(ff_output))
         # ========================
-        
+
         return x
     
     
@@ -188,10 +232,27 @@ class Encoder(nn.Module):
         output = None
 
         # ====== YOUR CODE: ======
-        pass
+        # Embed the input tokens
+        x = self.encoder_embedding(sentence)  # [Batch, SeqLen, EmbedDim]
+
+        # Add positional encoding
+        x = self.positional_encoding(x)
+
+        # Apply dropout
+        x = self.dropout(x)
+
+        # Pass through encoder layers
+        for layer in self.encoder_layers:
+            x = layer(x, padding_mask)
+
+        # Extract the [CLS] token representation (first token)
+        cls_token = x[:, 0, :]  # [Batch, EmbedDim]
+
+        # Apply classification MLP
+        output = self.classification_mlp(cls_token).squeeze(-1)  # [Batch]
         # ========================
-        
-        
+
+
         return output  
     
     def predict(self, sentence, padding_mask):

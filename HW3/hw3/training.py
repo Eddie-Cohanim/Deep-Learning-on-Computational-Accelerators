@@ -363,7 +363,13 @@ class TransformerEncoderTrainer(Trainer):
             # TODO:
             #  fill out the testing loop.
             # ====== YOUR CODE: ======
-            pass
+            # Forward pass
+            pred = self.model(input_ids, attention_mask).to(self.device)
+            loss = self.loss_fn(pred.squeeze(-1), label)
+
+            # Compute number of correct predictions
+            y_t = torch.round(torch.sigmoid(pred)).float()
+            num_correct = (y_t.squeeze(-1) == label).sum()
             # ========================
 
 

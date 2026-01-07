@@ -26,8 +26,45 @@ def sliding_window_attention(q, k, v, window_size, padding_mask=None):
     values, attention = None, None
 
     # ====== YOUR CODE: ======
-    pass
-    # ======================
+    assert window_size % 2 == 0, "Window size must be an even number"
+    device = q.device
+    half_window_size = window_size / 2
+    out_mat_dims  = (seq_len, seq_len)
+    B = torch.zeros(out_mat_dims).to(device)
+    offset = torch.arange(seq_len).unsqueeze(1) - torch.arange(seq_len).unsqueeze(0)
+    offset = offset.to(device)
+
+    B[(offset < -half_window_size) | (offset > half_window_size)] = float('-inf')
+
+    if k.dim() == 4:
+        B = B.repeat(batch_size, k.shape[1], 1, 1)
+        b_idxs, h_idxs, r_idxs, c_idxs = torch.where(B == 0)
+        temp = (q[b_idxs, h_idxs, r_idxs, :] * k[b_idxs, h_idxs, c_idxs, :])
+        B[b_idxs, h_idxs, r_idxs, c_idxs] = temp.sum(dim=-1)
+        B /= math.sqrt(embed_dim)
+    else:
+        B = B.repeat(batch_size, 1, 1)
+        b_idxs, r_idxs, c_idxs = torch.where(B == 0)
+        temp = (q[b_idxs, r_idxs, :] * k[b_idxs, c_idxs, :])
+        B[b_idxs, r_idxs, c_idxs] = temp.sum(dim=-1)
+        B /= math.sqrt(embed_dim)
+
+    if padding_mask is not None:
+        padding_mask = padding_mask.to(dtype=bool)
+        padding_mask = ~padding_mask
+        if q.dim() == 4:
+            padding_mask = (padding_mask[:, None, None, :] | padding_mask[:, None, :, None])
+        else:
+            padding_mask = (padding_mask[:, None, :] | padding_mask[:, :, None])
+
+        B = B.masked_fill(padding_mask, float('-inf'))
+
+
+    attention = torch.softmax(B, dim=-1)
+    attention = attention.masked_fill(torch.isnan(attention), 0.0)
+    values = torch.matmul(attention, v)
+
+    # ========================
 
     return values, attention
 
@@ -46,7 +83,7 @@ class MultiHeadAttention(nn.Module):
         # "bias=False" is optional, but for the projection we learned, there is no teoretical justification to use bias
         self.qkv_proj = nn.Linear(input_dim, 3*embed_dim)
         self.o_proj = nn.Linear(embed_dim, embed_dim)
-        
+
         self._reset_parameters()
 
     def _reset_parameters(self):
@@ -69,7 +106,7 @@ class MultiHeadAttention(nn.Module):
         # Determine value outputs
         # call the sliding window attention function you implemented
         # ====== YOUR CODE: ======
-        pass
+        values, attention = sliding_window_attention(q, k, v, self.window_size, padding_mask)
         # ========================
 
         values = values.permute(0, 2, 1, 3) # [Batch, SeqLen, Head, Dims]
@@ -146,9 +183,15 @@ class EncoderLayer(nn.Module):
         '''
 
         # ====== YOUR CODE: ======
-        pass
+        attn_output = self.self_attn(x= x, padding_mask = padding_mask,return_attention = False)
+        attn_output = self.dropout(attn_output)
+        x = self.norm1(x + attn_output)
+
+        ff_output = self.feed_forward(x)
+        ff_output = self.dropout(ff_output)
+        x = self.norm2( x + ff_output)
         # ========================
-        
+
         return x
     
     
@@ -188,10 +231,14 @@ class Encoder(nn.Module):
         output = None
 
         # ====== YOUR CODE: ======
-        pass
+        positional_encoding = self.positional_encoding(self.encoder_embedding(sentence))
+        output = self.dropout(positional_encoding)
+        for layer in self.encoder_layers:
+            output = layer(output, padding_mask)
+        output = self.classification_mlp(output[:, 0])
         # ========================
-        
-        
+
+
         return output  
     
     def predict(self, sentence, padding_mask):

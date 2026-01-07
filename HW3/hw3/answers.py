@@ -164,58 +164,11 @@ def part3_transformer_encoder_hyperparams():
 part3_q1 = r"""
 **Your answer:**
 
-Stacking encoder layers with sliding-window attention results in a broader context in the final layer through a mechanism similar to how stacking CNN layers increases the receptive field.
-
-In a single layer with sliding-window attention of size $w$, each token can only attend to tokens within a distance of $w/2$ from itself. However, when we stack multiple layers:
-
-**Layer 1**: Each token position receives information from tokens within $w/2$ distance.
-
-**Layer 2**: Each token position now receives information from the output of Layer 1. Since Layer 1's output at each position already incorporated information from $w/2$ neighbors, Layer 2 effectively receives information from tokens up to $w$ distance away (the neighbors of neighbors).
-
-**Layer 3**: Each token can now access information from tokens up to $3w/2$ distance away, and so on.
-
-**Mathematically**: After $L$ layers with window size $w$, each token position can theoretically access information from tokens up to a distance of approximately $L \cdot w/2$.
-
-This is analogous to CNNs where:
-- A single convolutional layer with kernel size $k$ has a receptive field of size $k$
-- Stacking $L$ such layers results in a receptive field of approximately $L \cdot k$
-
-Therefore, by stacking multiple encoder layers, we can achieve long-range dependencies while maintaining the computational efficiency of $O(nw)$ per layer, resulting in overall complexity of $O(Lnw)$ instead of $O(n^2)$ for full attention.
 """
 
 part3_q2 = r"""
 **Your answer:**
 
-One effective variation is **Dilated Sliding Window Attention** (inspired by dilated convolutions):
-
-**Proposed Pattern:**
-Instead of attending to consecutive tokens within a window, use a sliding window with dilation. For a token at position $i$ with window size $w$ and dilation rate $d$:
-- Attend to tokens at positions: $i - d \cdot w/2, i - d \cdot (w/2-1), ..., i, ..., i + d \cdot (w/2-1), i + d \cdot w/2$
-
-**Time Complexity:**
-- Each token still attends to exactly $w$ other tokens (the window size remains fixed)
-- Total complexity per layer: $O(nw)$, same as regular sliding window
-- With $L$ layers: $O(Lnw)$
-
-**Global Information Sharing:**
-- **Single layer with dilation $d$**: Each token accesses information from tokens up to distance $d \cdot w/2$
-- **Stacking layers with increasing dilation** (e.g., $d=1, 2, 4, 8, ...$):
-  - Layer 1 ($d=1$): Access up to $w/2$ distance
-  - Layer 2 ($d=2$): Access up to $2w/2 = w$ distance
-  - Layer 3 ($d=4$): Access up to $4w/2 = 2w$ distance
-  - Layer $k$ ($d=2^{k-1}$): Access up to $2^{k-1} \cdot w/2$ distance
-
-This achieves **exponential growth** in receptive field with linear number of layers, requiring far fewer layers than regular sliding window to capture long-range dependencies.
-
-**Advantages:**
-- Faster global information propagation (logarithmic layers needed for sequence-length coverage)
-- Same computational complexity as sliding window
-- More efficient for long sequences
-
-**Limitations:**
-- May miss fine-grained local interactions that fall between dilated positions
-- Requires careful tuning of dilation rates for each layer
-- Information flow is still limited by the dilation pattern - some token pairs may need many layers to interact
 """
 
 # ==============

@@ -23,7 +23,9 @@ def char_maps(text: str):
     #  It's best if you also sort the chars before assigning indices, so that
     #  they're in lexical order.
     # ====== YOUR CODE: ======
-    pass
+    unique_chars = sorted(set(text))
+    char_to_idx = {char: idx for idx, char in enumerate(unique_chars)}
+    idx_to_char = {idx: char for idx, char in enumerate(unique_chars)}
     # ========================
     return char_to_idx, idx_to_char
 

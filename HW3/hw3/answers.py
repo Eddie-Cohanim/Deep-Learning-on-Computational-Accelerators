@@ -45,19 +45,46 @@ def part1_generation_params():
 
 
 part1_q1 = r"""
-**Your answer:**
+**Answer 1:**
+Very long sequences make training computationally expensive and unstable while using shorter sequences keeps memory usage 
+manageable, allows efficient batching and parallel training, and enables truncated backpropagation through time, which stabilizes 
+gradients. In addition, splitting the text creates many training samples from a single corpus, improving data efficiency
+and generalization
+
+
+
+
 """
 
 part1_q2 = r"""
-**Your answer:**
+**Answer 2:**
+
+Even though the model is trained on fixed length sequences, it can remember information for longer than that and this is because 
+the hidden state is passed forward instead of being reset. During training, batches are processed in order so the hidden state 
+from one batch becomes the context for the next. During generation, the hidden state keeps accumulating information, 
+allowing the model to maintain long-range context beyond the sequence length.
 """
 
 part1_q3 = r"""
-**Your answer:**
+**Answer 3:**
+As said before while training the network, we pass the hidden state between batches. This hidden state acts as context that summarizes the 
+preceding samples. Therefore, batches must preserve the original order of the text so that consecutive batches correspond to 
+adjacent parts of the corpus. If batches were shuffled, the hidden state would no longer match the input sequence and would 
+effectively represent random context.
 """
 
 part1_q4 = r"""
-**Your answer:**
+**Answer 4:**
+The temperature controls how sharp or flat the sampling distribution is. A higher temperature produces a more uniform distribution, while a lower 
+temperature produces a sharper and more spiky. Since we usually want the model to prefer the most likely next characters rather than sample almost uniformly, 
+we often lower the temperature to increase confidence.
+
+When the temperature is very high, dividing the logits by a large $T$ reduces the relative differences between them. After applying softmax, this results in a 
+nearly uniform distribution, causing the model to sample characters almost at random and often generate incoherent text.
+
+When the temperature is very low, dividing by a small $T$ amplifies the differences between logits. Because softmax is exponential, even small score 
+differences become even more emplified, concentrating most of the probability mass on the highest scoring characters. This leads to more deterministic and confident 
+predictions, but can also cause repetitive text.
 """
 # ==============
 
@@ -169,60 +196,57 @@ def part3_transformer_encoder_hyperparams():
 
 
 part3_q1 = r"""
-**Your answer:**
+**Answer1:**
 
-Stacking encoder layers with sliding-window attention results in a broader context in the final layer through a mechanism similar to how stacking CNN layers increases the receptive field.
+Stacking encoder layers with sliding-window attention increases the effective context because information can propagate across 
+layers, even though each individual layer only attends locally. This is directly analogous to CNNs, where stacking convolutional 
+layers increases the receptive field despite each layer having a small kernel.
 
-In a single layer with sliding-window attention of size $w$, each token can only attend to tokens within a distance of $w/2$ from itself. However, when we stack multiple layers:
+In the first encoder layer, each token only attends to tokens within a fixed local window. In the next layers, tokens attend to 
+representations that already include information from their neighbors windows in the previous layer. As layers are stacked, 
+this local information is repeatedly combined and passed forward, allowing each token in higher layers to indirectly 
+incorporate information from progressively more distant tokens.
 
-**Layer 1**: Each token position receives information from tokens within $w/2$ distance.
-
-**Layer 2**: Each token position now receives information from the output of Layer 1. Since Layer 1's output at each position already incorporated information from $w/2$ neighbors, Layer 2 effectively receives information from tokens up to $w$ distance away (the neighbors of neighbors).
-
-**Layer 3**: Each token can now access information from tokens up to $3w/2$ distance away, and so on.
-
-**Mathematically**: After $L$ layers with window size $w$, each token position can theoretically access information from tokens up to a distance of approximately $L \cdot w/2$.
-
-This is analogous to CNNs where:
-- A single convolutional layer with kernel size $k$ has a receptive field of size $k$
-- Stacking $L$ such layers results in a receptive field of approximately $L \cdot k$
-
-Therefore, by stacking multiple encoder layers, we can achieve long-range dependencies while maintaining the computational efficiency of $O(nw)$ per layer, resulting in overall complexity of $O(Lnw)$ instead of $O(n^2)$ for full attention.
-"""
+As result, the final layer can have to a much broader context, even though every attention operation is restricted to a 
+local sliding window."""
 
 part3_q2 = r"""
-**Your answer:**
+**Answer 2:**
 
-One effective variation is **Dilated Sliding Window Attention** (inspired by dilated convolutions):
+One variation is a \textbf{multi-scale sparse window}. The goal is still like sliding-window attention (each token attends to
+only $w$ others), but instead of using all $w$ links on the closest neighbors, we use some of them on farther tokens so the
+token gets a more global view.
 
-**Proposed Pattern:**
-Instead of attending to consecutive tokens within a window, use a sliding window with dilation. For a token at position $i$ with window size $w$ and dilation rate $d$:
-- Attend to tokens at positions: $i - d \cdot w/2, i - d \cdot (w/2-1), ..., i, ..., i + d \cdot (w/2-1), i + d \cdot w/2$
+So for a token at position $i$, instead of attending to the contiguous block around it, we choose neighbors at increasing
+distances. For example:
+\[
+\mathcal{N}(i)=\{i\pm 1,\ i\pm 2,\ i\pm 4,\ i\pm 8\}\cap[1,n].
+\]
+This keeps the very local information (the $\pm1,\pm2$ offsets), but also adds a few longer jumps (like $\pm8$), meaning each
+token can see further without attending to everything.
 
-**Time Complexity:**
-- Each token still attends to exactly $w$ other tokens (the window size remains fixed)
-- Total complexity per layer: $O(nw)$, same as regular sliding window
-- With $L$ layers: $O(Lnw)$
+The complexity does not change asymptotically: each token attends to $|\mathcal{N}(i)|=O(w)$ keys, so one layer costs
+\[
+T_{\text{layer}} = O(nw)
+\]
 
-**Global Information Sharing:**
-- **Single layer with dilation $d$**: Each token accesses information from tokens up to distance $d \cdot w/2$
-- **Stacking layers with increasing dilation** (e.g., $d=1, 2, 4, 8, ...$):
-  - Layer 1 ($d=1$): Access up to $w/2$ distance
-  - Layer 2 ($d=2$): Access up to $2w/2 = w$ distance
-  - Layer 3 ($d=4$): Access up to $4w/2 = 2w$ distance
-  - Layer $k$ ($d=2^{k-1}$): Access up to $2^{k-1} \cdot w/2$ distance
+global information get shared through multiple layers. In one layer, token $i$ can pick up
+information from a farthr token like $i+8$. In the next layer, that information is already inside the representation of
+$i$, so when $i$ attends again (to $i+8$ and also to other far tokens), it can propagate that information further. In this
+sense, long-range context is built by chaining hops across layers, not by a single direct attention edge to every position.
 
-This achieves **exponential growth** in receptive field with linear number of layers, requiring far fewer layers than regular sliding window to capture long-range dependencies.
+There will be fewer layers and that is because we also include larger jumps, the
+distance that information can travel grows much faster. with offsets like $1,2,4,8,\ldots$ the reachable range can
+grow quickly with depth, and a an estimate is that reaching the whole sequence takes about
+\[
+L = O(\log(n/w))
+\]
+layers.
 
-**Advantages:**
-- Faster global information propagation (logarithmic layers needed for sequence-length coverage)
-- Same computational complexity as sliding window
-- More efficient for long sequences
+our limitations are that even with the long jumps, two very far tokens can not attend to each other directly in one layer, so
+their interaction is still indirect and goes through intermediate tokens. Also, since the pattern is sparse, it may
+skip some positions gaps unless we mix different jump sizes across heads or rotate the pattern across layers.
 
-**Limitations:**
-- May miss fine-grained local interactions that fall between dilated positions
-- Requires careful tuning of dilation rates for each layer
-- Information flow is still limited by the dilation pattern - some token pairs may need many layers to interact
 """
 
 # ==============

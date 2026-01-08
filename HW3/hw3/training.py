@@ -63,7 +63,7 @@ class Trainer(abc.ABC):
         """
         actual_num_epochs = 0
         train_loss, train_acc, test_loss, test_acc = [], [], [], []
-
+        
         best_acc = None
         epochs_without_improvement = 0
 
@@ -94,33 +94,36 @@ class Trainer(abc.ABC):
             #  - Implement early stopping. This is a very useful and
             #    simple regularization technique that is highly recommended.
             # ====== YOUR CODE: ======
-            # Train for one epoch
             train_result = self.train_epoch(dl_train, verbose=verbose, **kw)
-            train_loss.append(sum(train_result.losses) / len(train_result.losses))
+            test_result  = self.test_epoch(dl_test,  verbose=verbose, **kw)
+
+            train_loss.append(float(sum(train_result.losses) / len(train_result.losses)))
             train_acc.append(train_result.accuracy)
 
-            # Evaluate on test set
-            test_result = self.test_epoch(dl_test, verbose=verbose, **kw)
-            test_loss.append(sum(test_result.losses) / len(test_result.losses))
+            test_loss.append(float(sum(test_result.losses) / len(test_result.losses)))
             test_acc.append(test_result.accuracy)
 
             actual_num_epochs += 1
-
-            # Early stopping and checkpoint logic
+           
             if best_acc is None or test_result.accuracy > best_acc:
                 best_acc = test_result.accuracy
-                epochs_without_improvement = 0
                 save_checkpoint = True
-            else:
-                epochs_without_improvement += 1
 
-            # Check early stopping condition
-            if early_stopping is not None and epochs_without_improvement >= early_stopping:
-                self._print(
-                    f"Early stopping after {epochs_without_improvement} epochs without improvement",
-                    verbose=True
-                )
-                break
+           
+            if early_stopping is not None:
+                if "best_test_loss_so_far" not in locals():
+                    best_test_loss_so_far = None
+
+                current_test_loss = float(sum(test_result.losses) / len(test_result.losses))
+
+                if best_test_loss_so_far is None or current_test_loss < best_test_loss_so_far:
+                    best_test_loss_so_far = current_test_loss
+                    epochs_without_improvement = 0
+                else:
+                    epochs_without_improvement += 1
+
+                if epochs_without_improvement >= early_stopping:
+                    break
             # ========================
 
             # Save model checkpoint if requested
@@ -248,14 +251,14 @@ class RNNTrainer(Trainer):
     def train_epoch(self, dl_train: DataLoader, **kw):
         # TODO: Implement modifications to the base method, if needed.
         # ====== YOUR CODE: ======
-        pass
+        self.hidden_state = None
         # ========================
         return super().train_epoch(dl_train, **kw)
 
     def test_epoch(self, dl_test: DataLoader, **kw):
         # TODO: Implement modifications to the base method, if needed.
         # ====== YOUR CODE: ======
-        pass
+        self.hidden_state = None   
         # ========================
         return super().test_epoch(dl_test, **kw)
 
@@ -273,7 +276,22 @@ class RNNTrainer(Trainer):
         #  - Update params
         #  - Calculate number of correct char predictions
         # ====== YOUR CODE: ======
-        pass
+        X, y = batch
+        X = X.to(self.device, dtype=torch.float) 
+        y = y.to(self.device, dtype=torch.long)
+        seq_len = y.shape[1]
+
+        y_pred, hidden_state = self.model(x, self.hidden_state)
+        self.hidden_state = hidden_state.detach()
+
+        self.optimizer.zero_grad()
+        loss = sum(self.loss_fn(y_pred[:, i, :], y[:, i]) for i in range(seq_len))
+        loss.backward()
+
+        self.optimizer.step()
+
+        y_pred = torch.argmax(y_pred, dim=-1)
+        num_correct = torch.sum(y_pred == y).float()
         # ========================
 
         # Note: scaling num_correct by seq_len because each sample has seq_len
@@ -293,7 +311,12 @@ class RNNTrainer(Trainer):
             #  - Loss calculation
             #  - Calculate number of correct predictions
             # ====== YOUR CODE: ======
-            pass
+            y_pred, hidden_state = self.model(x, self.hidden_state)
+            loss = sum(self.loss_fn(y_pred[:, i,:], y[:, i]) for i in range(seq_len))# too many indecies? 
+            y_pred = torch.argmax(y_pred, dim=-1)
+            num_correct = torch.sum(y_pred == y).float()
+            self.hidden_state = hidden_state.detach()
+
             # ========================
 
         return BatchResult(loss.item(), num_correct.item() / seq_len)
@@ -305,19 +328,7 @@ class VAETrainer(Trainer):
         x = x.to(self.device)  # Image batch (N,C,H,W)
         # TODO: Train a VAE on one batch.
         # ====== YOUR CODE: ======
-        self.optimizer.zero_grad()
-
-        # Forward pass
-        xr, z_mu, z_log_sigma2 = self.model(x)
-
-        # Compute loss
-        loss, data_loss, kldiv_loss = self.loss_fn(x, xr, z_mu, z_log_sigma2)
-
-        # Backward pass
-        loss.backward()
-
-        # Update parameters
-        self.optimizer.step()
+        pass
         # ========================
 
         return BatchResult(loss.item(), 1 / data_loss.item())
@@ -329,11 +340,7 @@ class VAETrainer(Trainer):
         with torch.no_grad():
             # TODO: Evaluate a VAE on one batch.
             # ====== YOUR CODE: ======
-            # Forward pass
-            xr, z_mu, z_log_sigma2 = self.model(x)
-
-            # Compute loss
-            loss, data_loss, kldiv_loss = self.loss_fn(x, xr, z_mu, z_log_sigma2)
+            pass
             # ========================
 
         return BatchResult(loss.item(), 1 / data_loss.item())

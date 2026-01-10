@@ -94,16 +94,19 @@ class Trainer(abc.ABC):
             #  - Implement early stopping. This is a very useful and
             #    simple regularization technique that is highly recommended.
             # ====== YOUR CODE: ======
+            # Train for one epoch
             train_result = self.train_epoch(dl_train, verbose=verbose, **kw)
             train_loss.append(sum(train_result.losses) / len(train_result.losses))
             train_acc.append(train_result.accuracy)
 
+            # Evaluate on test set
             test_result = self.test_epoch(dl_test, verbose=verbose, **kw)
             test_loss.append(sum(test_result.losses) / len(test_result.losses))
             test_acc.append(test_result.accuracy)
 
             actual_num_epochs += 1
 
+            # Check if this is the best accuracy so far
             if best_acc is None or test_result.accuracy > best_acc:
                 best_acc = test_result.accuracy
                 epochs_without_improvement = 0
@@ -111,11 +114,9 @@ class Trainer(abc.ABC):
             else:
                 epochs_without_improvement += 1
 
+            # Early stopping
             if early_stopping is not None and epochs_without_improvement >= early_stopping:
-                self._print(
-                    f"Early stopping after {epochs_without_improvement} epochs without improvement",
-                    verbose=True
-                )
+                self._print(f'Early stopping after {epochs_without_improvement} epochs without improvement', verbose=True)
                 break
             # ========================
 
@@ -244,14 +245,16 @@ class RNNTrainer(Trainer):
     def train_epoch(self, dl_train: DataLoader, **kw):
         # TODO: Implement modifications to the base method, if needed.
         # ====== YOUR CODE: ======
-        pass
+        # Reset hidden state at the beginning of each epoch
+        self.hidden_state = None
         # ========================
         return super().train_epoch(dl_train, **kw)
 
     def test_epoch(self, dl_test: DataLoader, **kw):
         # TODO: Implement modifications to the base method, if needed.
         # ====== YOUR CODE: ======
-        pass
+        # Reset hidden state at the beginning of each epoch
+        self.hidden_state = None
         # ========================
         return super().test_epoch(dl_test, **kw)
 
@@ -269,7 +272,27 @@ class RNNTrainer(Trainer):
         #  - Update params
         #  - Calculate number of correct char predictions
         # ====== YOUR CODE: ======
-        pass
+        # Zero gradients before forward pass
+        self.optimizer.zero_grad()
+
+        # Forward pass
+        y_pred, hidden_state = self.model(x, self.hidden_state)
+
+        # Detach hidden state to prevent backprop through entire history
+        self.hidden_state = hidden_state.detach()
+
+        # Calculate loss for each timestep and sum
+        loss = self.loss_fn(y_pred[:, 0, :], y[:, 0])
+        for t in range(1, seq_len):
+            loss = loss + self.loss_fn(y_pred[:, t, :], y[:, t])
+
+        # Backward pass
+        loss.backward()
+        self.optimizer.step()
+
+        # Calculate accuracy
+        predictions = torch.argmax(y_pred, dim=2)
+        num_correct = torch.sum(predictions == y).float()
         # ========================
 
         # Note: scaling num_correct by seq_len because each sample has seq_len
@@ -289,12 +312,24 @@ class RNNTrainer(Trainer):
             #  - Loss calculation
             #  - Calculate number of correct predictions
             # ====== YOUR CODE: ======
-            pass
+            # Forward pass
+            y_pred, hidden_state = self.model(x, self.hidden_state)
+
+            # Update hidden state for next batch
+            self.hidden_state = hidden_state.detach()
+
+            # Calculate loss for each timestep and sum
+            loss = self.loss_fn(y_pred[:, 0, :], y[:, 0])
+            for t in range(1, seq_len):
+                loss = loss + self.loss_fn(y_pred[:, t, :], y[:, t])
+
+            # Calculate accuracy
+            predictions = torch.argmax(y_pred, dim=2)
+            num_correct = torch.sum(predictions == y).float()
             # ========================
 
         return BatchResult(loss.item(), num_correct.item() / seq_len)
-
-
+    
 class VAETrainer(Trainer):
     def train_batch(self, batch) -> BatchResult:
         x, _ = batch
